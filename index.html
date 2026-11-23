@@ -3,726 +3,1371 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظومة الطوارئ المركزية - وزارة الصحة (لايف)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Cairo -->
+    <title>مركز التحكم الرئيسي | الإدارة المركزية للطوارئ والرعاية الحرجة</title>
+    
+    <!-- تحميل خط Cairo و Tajawal للواجهة العربية الرسمية -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- تحميل مكتبة Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- تحميل مكتبة أيقونات Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- إعدادات Tailwind المخصصة -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        moh: {
+                            900: '#0a192f',
+                            800: '#112240',
+                            700: '#1d3557',
+                            600: '#0284c7',
+                            500: '#0ea5e9',
+                            gold: '#d97706'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #f1f5f9;
+            overflow-x: hidden;
         }
-        @keyframes pulse-border {
-            0%, 100% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
-            50% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+
+        /* تأثير النبض للبلاغات الحمراء العاجلة */
+        @keyframes urgentPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); border-color: #dc2626; }
+            50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); border-color: #ef4444; }
         }
-        .animate-urgent {
-            animation: pulse-border 1.5s infinite;
+        .urgent-alert-card {
+            animation: urgentPulse 2s infinite;
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        /* شريط تمرير مخصص */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-10">
+<body class="text-slate-800 antialiased selection:bg-sky-600 selection:text-white">
 
-    <!-- Top Emergency Alert Banner -->
-    <div id="alert-banner" class="hidden fixed top-0 left-0 right-0 z-50 p-4 shadow-2xl transition-all duration-300 border-b-4">
-        <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <span id="alert-icon" class="text-2xl animate-bounce">🚨</span>
+    <!-- ==================== 1. شاشة تسجيل الدخول الاحترافية ==================== -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-moh-900 to-moh-800 p-4 relative overflow-hidden">
+        <!-- خلفية هندسية خفيفة -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 28px 28px;"></div>
+
+        <div class="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden z-10">
+            <!-- ترويسة بطاقة الدخول -->
+            <div class="bg-gradient-to-l from-moh-900 to-moh-700 p-6 text-center text-white border-b-4 border-amber-500">
+                <div class="w-16 h-16 mx-auto mb-3 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
+                    <i data-lucide="shield-alert" class="w-9 h-9 text-amber-400"></i>
+                </div>
+                <p class="text-xs font-bold tracking-wider text-sky-300 uppercase mb-1">جمهورية مصر العربية • وزارة الصحة والسكان</p>
+                <h1 class="text-xl sm:text-2xl font-black leading-snug">الإدارة المركزية للطوارئ والرعاية الحرجة</h1>
+                <p class="text-sm text-slate-300 mt-1 font-semibold">منظومة الرصد اللحظي وإدارة الأزمات (27 محافظة)</p>
+            </div>
+
+            <!-- نموذج تسجيل الدخول -->
+            <form id="loginForm" class="p-6 sm:p-8 space-y-5">
                 <div>
-                    <h4 id="alert-title" class="font-extrabold text-sm sm:text-base">تنبيه عاجل</h4>
-                    <p id="alert-message" class="text-xs sm:text-sm font-semibold opacity-95"></p>
-                </div>
-            </div>
-            <button onclick="dismissAlert()" class="px-3 py-1.5 bg-black/30 hover:bg-black/50 rounded-lg text-xs font-bold transition">
-                إغلاق التنبيه
-            </button>
-        </div>
-    </div>
-
-    <!-- App Header -->
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shadow-md shadow-red-900/50">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-extrabold text-base sm:text-lg text-white leading-tight">غرفة الطوارئ المركزية</h1>
-                        <span id="connection-status" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">🟡 وضع محلي (بانتظار ربط السيرفر)</span>
-                    </div>
-                    <p class="text-xs text-slate-400">منظومة البلاغات والأزمات الموحدة - 27 محافظة</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <!-- Firebase Config Button -->
-                <button onclick="openConfigModal()" class="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-blue-300 transition" title="إعدادات الربط اللحظي (Firebase)">
-                    ⚙️ ربط لايف
-                </button>
-                <!-- Sound Mute/Unmute Toggle -->
-                <button id="mute-btn" onclick="toggleMute()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition">
-                    <span id="mute-icon">🔊</span>
-                    <span id="mute-text" class="hidden sm:inline">الصوت مفعل</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Navigation Tabs -->
-        <div class="max-w-3xl mx-auto px-4 flex gap-2 pb-3">
-            <button id="tab-form" onclick="switchTab('form')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md">
-                <span>📝</span>
-                <span>إرسال بلاغ جديد</span>
-            </button>
-            <button id="tab-dashboard" onclick="switchTab('dashboard')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
-                <span>📡</span>
-                <span>لوحة الغرفة المركزية</span>
-                <span id="active-badge" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-extrabold">0</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Content Container -->
-    <main class="max-w-3xl w-full mx-auto px-4 pt-5 flex-1">
-
-        <!-- VIEW 1: Submit New Report Form -->
-        <section id="view-form" class="space-y-5">
-            <form id="emergency-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
-
-                <!-- 1. Governorate & Risk Level -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">1. البيانات الأساسية ومستوى الخطر</h2>
-                    
-                    <div>
-                        <label for="governorate" class="block text-sm font-bold text-slate-200 mb-1.5">المحافظة / المديرية (27 محافظة) <span class="text-red-400">*</span></label>
-                        <select id="governorate" required class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                            <option value="" disabled selected>اختر المحافظة...</option>
-                            <option value="القاهرة">القاهرة</option>
-                            <option value="الجيزة">الجيزة</option>
-                            <option value="الإسكندرية">الإسكندرية</option>
-                            <option value="القليوبية">القليوبية</option>
-                            <option value="الشرقية">الشرقية</option>
-                            <option value="الدقهلية">الدقهلية</option>
-                            <option value="البحيرة">البحيرة</option>
-                            <option value="المنوفية">المنوفية</option>
-                            <option value="الغربية">الغربية</option>
-                            <option value="كفر الشيخ">كفر الشيخ</option>
-                            <option value="دمياط">دمياط</option>
-                            <option value="بورسعيد">بورسعيد</option>
-                            <option value="الإسماعيلية">الإسماعيلية</option>
-                            <option value="السويس">السويس</option>
-                            <option value="شمال سيناء">شمال سيناء</option>
-                            <option value="جنوب سيناء">جنوب سيناء</option>
-                            <option value="بني سويف">بني سويف</option>
-                            <option value="الفيوم">الفيوم</option>
-                            <option value="المنيا">المنيا</option>
-                            <option value="أسيوط">أسيوط</option>
-                            <option value="سوهاج">سوهاج</option>
-                            <option value="قنا">قنا</option>
-                            <option value="الأقصر">الأقصر</option>
-                            <option value="أسوان">أسوان</option>
-                            <option value="البحر الأحمر">البحر الأحمر</option>
-                            <option value="الوادي الجديد">الوادي الجديد</option>
-                            <option value="مطروح">مطروح</option>
+                    <label for="userSelect" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-moh-600"></i>
+                        اختر الجهة / اسم المستخدم (المحافظة أو الغرفة المركزية)
+                    </label>
+                    <div class="relative">
+                        <select id="userSelect" required class="w-full bg-slate-50 border-2 border-slate-300 text-slate-900 text-base font-bold rounded-xl focus:ring-2 focus:ring-moh-600 focus:border-moh-600 block p-3.5 pr-4 appearance-none transition cursor-pointer">
+                            <option value="" disabled selected>-- اختر الجهة المسؤولة --</option>
+                            <option value="CENTRAL" class="font-black text-red-700 bg-red-50">🏛️ الغرفة المركزية - تحكم رئيسي (الوزارة)</option>
+                            <optgroup label="مديريات الشئون الصحية بالمحافظات (27 محافظة)">
+                                <!-- يتم تعبئة الـ 27 محافظة برمجياً -->
+                            </optgroup>
                         </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">مستوى الخطر <span class="text-red-400">*</span></label>
-                        <div class="grid grid-cols-3 gap-2.5">
-                            <button type="button" onclick="selectRisk('أخضر')" id="risk-أخضر" class="risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1">
-                                <span class="w-4 h-4 rounded-full bg-emerald-500"></span>
-                                <span>أخضر (عادي)</span>
-                            </button>
-                            <button type="button" onclick="selectRisk('أصفر')" id="risk-أصفر" class="risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1">
-                                <span class="w-4 h-4 rounded-full bg-amber-400"></span>
-                                <span>أصفر (متوسط)</span>
-                            </button>
-                            <button type="button" onclick="selectRisk('أحمر')" id="risk-أحمر" class="risk-btn py-3 px-2 rounded-xl border-2 border-red-500 bg-red-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-red-500/50">
-                                <span class="w-4 h-4 rounded-full bg-red-500 animate-ping"></span>
-                                <span>أحمر (عاجل)</span>
-                            </button>
-                        </div>
-                        <input type="hidden" id="risk-level" value="أحمر">
-                    </div>
-                </div>
-
-                <!-- 2. Incident Type & Location -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">2. نوع الحادث والموقع</h2>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">نوع الحادث / الأزمة</label>
-                        <div class="flex flex-wrap gap-2">
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="حادث طريق" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🚗 حادث طريق</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="حريق/انهيار" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🔥 حريق / انهيار</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="انقطاع كهرباء" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">⚡ انقطاع كهرباء</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="سيول/طقس" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🌊 سيول / طقس</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="إخلاء طبي" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🚑 إخلاء طبي</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="location" class="block text-sm font-bold text-slate-200 mb-1.5">الموقع الدقيق (العنوان / GPS) <span class="text-red-400">*</span></label>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="location" required placeholder="مثال: طريق القاهرة الإسكندرية الصحراوي كم 45" class="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                            <button type="button" onclick="fetchGPS()" id="gps-btn" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-blue-300 font-bold text-xs sm:text-sm rounded-xl border border-slate-600 transition flex items-center justify-center gap-1.5 whitespace-nowrap">
-                                <span>📍</span>
-                                <span>تحديد الموقع GPS تلقائياً</span>
-                            </button>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3.5 text-slate-500">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. Casualties & Triage -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">3. الإحصائيات وتصنيف الحالات</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1">إجمالي المصابين</label>
-                            <input type="number" id="total-injured" min="0" value="0" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-center font-bold focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-red-400 mb-1">حرجة (أحمر)</label>
-                            <input type="number" id="critical-cases" min="0" value="0" class="w-full bg-slate-900 border border-red-900/60 rounded-xl px-3 py-2.5 text-red-300 text-center font-bold focus:outline-none focus:border-red-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-amber-400 mb-1">متوسطة (أصفر)</label>
-                            <input type="number" id="moderate-cases" min="0" value="0" class="w-full bg-slate-900 border border-amber-900/60 rounded-xl px-3 py-2.5 text-amber-300 text-center font-bold focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-emerald-400 mb-1">بسيطة (أخضر)</label>
-                            <input type="number" id="minor-cases" min="0" value="0" class="w-full bg-slate-900 border border-emerald-900/60 rounded-xl px-3 py-2.5 text-emerald-300 text-center font-bold focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-xs font-bold text-slate-400 mb-1">الوفيات</label>
-                            <input type="number" id="deaths" min="0" value="0" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-slate-200 text-center font-bold focus:outline-none focus:border-slate-400">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Hospital & Urgent Needs -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">4. الموقف بالمستشفيات والاحتياجات العاجلة</h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label for="hospitals" class="block text-xs font-bold text-slate-300 mb-1">المستشفيات المستقبلة</label>
-                            <input type="text" id="hospitals" placeholder="مثال: مستشفى الشيخ زايد التخصصي" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="beds" class="block text-xs font-bold text-slate-300 mb-1">الأسرة المتاحة (رعاية / حضانات)</label>
-                            <input type="text" id="beds" placeholder="مثال: 4 رعاية، 2 حضانة" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">الاحتياج العاجل للدعم المركزي</label>
-                        <div class="flex flex-wrap gap-2">
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="أكياس دم" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🩸 أكياس دم</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="تخصصات طبية" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">👨‍⚕️ تخصصات طبية</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="سيارات إسعاف" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🚑 سيارات إسعاف</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="سولار/مولدات" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">⛽ سولار / مولدات</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="إخلاء طبي" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🚁 إخلاء طبي</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="submit-btn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-l from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-extrabold text-base shadow-lg shadow-red-900/40 transition transform active:scale-95 flex items-center justify-center gap-2">
-                    <span>🚨</span>
-                    <span>إرسال البلاغ وتفعيل التنبيه الفوري</span>
-                </button>
-
-            </form>
-        </section>
-
-        <!-- VIEW 2: Central Room Live Dashboard -->
-        <section id="view-dashboard" class="hidden space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-800 border border-slate-700 rounded-2xl p-4">
                 <div>
-                    <h2 class="font-extrabold text-base text-white">متابعة البلاغات الحية</h2>
-                    <p class="text-xs text-slate-400">تحديث لحظي تلقائي بين كافة المحافظات والغرفة المركزية</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="pinInput" class="block text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <i data-lucide="key-round" class="w-4 h-4 text-moh-600"></i>
+                            رمز الدخول السري (PIN)
+                        </label>
+                        <button type="button" id="fillDemoPinBtn" class="text-xs font-bold text-moh-600 hover:text-moh-800 underline">
+                            تعبئة الرمز الافتراضي تلقائياً
+                        </button>
+                    </div>
+                    <input type="password" id="pinInput" maxlength="10" required placeholder="أدخل رمز المرور المخصص للجهة..." 
+                           class="w-full bg-slate-50 border-2 border-slate-300 text-slate-900 text-center text-xl tracking-[0.4em] font-black rounded-xl focus:ring-2 focus:ring-moh-600 focus:border-moh-600 block p-3.5 transition">
                 </div>
-                <div class="flex items-center gap-2">
-                    <span id="dashboard-stats" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-900 text-blue-400 border border-slate-700"></span>
+
+                <!-- مربع إرشادي للرموز الافتراضية للتجربة السريعة -->
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-xs text-slate-700 space-y-1.5">
+                    <div class="font-bold text-moh-800 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-4 h-4 text-moh-600"></i>
+                        بيانات الدخول الافتراضية للتشغيل والتجربة:
+                    </div>
+                    <div class="flex flex-wrap justify-between gap-2 pt-1 border-t border-sky-200/70">
+                        <span>🏛️ <strong>الغرفة المركزية:</strong> رمز <code class="bg-white px-2 py-0.5 rounded border border-sky-300 font-black text-red-700">0000</code></span>
+                        <span>📍 <strong>أي محافظة (27):</strong> رمز <code class="bg-white px-2 py-0.5 rounded border border-sky-300 font-black text-moh-700">1111</code></span>
+                    </div>
+                </div>
+
+                <!-- رسالة خطأ الدخول -->
+                <div id="loginError" class="hidden bg-red-50 border-r-4 border-red-600 text-red-700 p-3 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                    <span id="loginErrorText">رمز الدخول غير صحيح.</span>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-l from-moh-700 to-moh-600 hover:from-moh-800 hover:to-moh-700 text-white font-black text-base py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-5 h-5"></i>
+                    تسجيل الدخول إلى المنظومة
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== 2. الواجهة الرئيسية للمنظومة ==================== -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        
+        <!-- الهيدر الرسمي -->
+        <header class="bg-moh-900 text-white shadow-xl border-b-4 border-amber-500 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                    
+                    <!-- الهوية المؤسسية -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center shrink-0 shadow-md border border-white/20">
+                            <i data-lucide="activity" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-amber-400">وزارة الصحة والسكان</span>
+                                <span class="text-slate-500">|</span>
+                                <span class="text-xs font-semibold text-sky-300">الإدارة المركزية للطوارئ والرعاية الحرجة</span>
+                            </div>
+                            <h1 class="text-base sm:text-lg font-black tracking-tight text-white">مركز التحكم الرئيسي — متابعة الحوادث والإخلاء الطبي</h1>
+                        </div>
+                    </div>
+
+                    <!-- شريط أدوات المستخدم والحالة -->
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <!-- شارة المستخدم الحالي -->
+                        <div id="currentUserBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs sm:text-sm font-bold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="currentUserNameDisplay">جاري التحميل...</span>
+                        </div>
+
+                        <!-- مؤشر حالة الربط اللحظي -->
+                        <button type="button" onclick="openModal('firebaseModal')" id="syncStatusBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold transition" title="إعدادات الربط السحابي اللحظي">
+                            <i data-lucide="cloud" class="w-4 h-4 text-sky-400"></i>
+                            <span id="syncStatusText">وضع محلي (Local)</span>
+                        </button>
+
+                        <!-- زر كتم/تفعيل الصوت -->
+                        <button type="button" id="toggleSoundBtn" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-400 transition" title="تفعيل/كتم التنبيهات الصوتية">
+                            <i data-lucide="volume-2" id="soundIcon" class="w-4 h-4"></i>
+                        </button>
+
+                        <!-- زر إدارة رموز المرور (يظهر للغرفة المركزية) -->
+                        <button type="button" id="managePinsBtn" onclick="openModal('pinsModal')" class="hidden p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sky-300 transition" title="إدارة رموز دخول المحافظات">
+                            <i data-lucide="key" class="w-4 h-4"></i>
+                        </button>
+
+                        <!-- زر تسجيل الخروج -->
+                        <button type="button" id="logoutBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600/90 hover:bg-red-600 text-white text-xs sm:text-sm font-bold shadow transition">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                            <span>خروج</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+        </header>
 
-            <!-- Filter by Governorate -->
-            <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-300 whitespace-nowrap">تصفية حسب المحافظة:</span>
-                <select id="filter-gov" onchange="renderDashboard()" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-xs">
-                    <option value="ALL">جميع المحافظات (27)</option>
-                </select>
+        <!-- شريط التنبيه العاجل للبلاغات الحمراء (يظهر تلقائياً عند وجود بلاغ أحمر نشط) -->
+        <div id="redAlertBanner" class="hidden bg-red-600 text-white px-4 py-2.5 shadow-md border-b border-red-800">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2 font-black text-sm">
+                    <span class="px-2 py-0.5 bg-white text-red-700 rounded text-xs uppercase animate-bounce">عاجل جداً</span>
+                    <span id="redAlertBannerText">يوجد بلاغ طوارئ من المستوى الأحمر يتطلب التدخل الفوري!</span>
+                </div>
+                <button type="button" onclick="acknowledgeRedAlert()" class="text-xs bg-red-900 hover:bg-red-950 px-3 py-1 rounded-lg font-bold transition">
+                    إيقاف التنبيه الصوتي
+                </button>
             </div>
+        </div>
 
-            <!-- Reports List Container -->
-            <div id="reports-list" class="space-y-4"></div>
-        </section>
+        <!-- المحتوى الرئيسي -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
+            
+            <!-- شريط مؤشرات الأداء السريعة (KPIs) -->
+            <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500">إجمالي البلاغات النشطة</p>
+                        <p id="statTotalReports" class="text-2xl font-black text-slate-800 mt-1">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <i data-lucide="file-warning" class="w-6 h-6"></i>
+                    </div>
+                </div>
 
-    </main>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-r-4 border-red-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-red-600">بلاغات حمراء (حرجة)</p>
+                        <p id="statRedReports" class="text-2xl font-black text-red-700 mt-1">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                        <i data-lucide="siren" class="w-6 h-6"></i>
+                    </div>
+                </div>
 
-    <!-- Firebase Live Config Modal -->
-    <div id="config-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-600 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 class="font-extrabold text-base text-white">⚙️ إعداد الربط اللحظي بين الأجهزة (Firebase)</h3>
-                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white font-bold">✕</button>
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-r-4 border-amber-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-amber-600">إجمالي المصابين</p>
+                        <p id="statTotalInjured" class="text-2xl font-black text-slate-800 mt-1">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-r-4 border-purple-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-purple-700">حالات حرجة / رعاية</p>
+                        <p id="statCriticalCases" class="text-2xl font-black text-purple-800 mt-1">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                        <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-r-4 border-slate-700 col-span-2 lg:col-span-1 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-600">حالات الوفيات</p>
+                        <p id="statDeaths" class="text-2xl font-black text-slate-900 mt-1">0</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                        <i data-lucide="shield-x" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- تقسيم الشاشة: نموذج تسجيل البلاغ (يمين) + لوحة المتابعة اللحظية (يسار) -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                
+                <!-- ==================== العمود الأيمن: نموذج إرسال البلاغ (الأقسام الأربعة) ==================== -->
+                <section class="xl:col-span-5 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-l from-moh-800 to-moh-700 px-5 py-4 text-white flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="radio" class="w-5 h-5 text-amber-400"></i>
+                            <h2 class="font-black text-base">تسجيل وإرسال بلاغ طوارئ جديد</h2>
+                        </div>
+                        <span class="text-xs bg-white/15 px-2.5 py-1 rounded-lg font-bold">نموذج موحد</span>
+                    </div>
+
+                    <form id="incidentForm" class="p-5 space-y-5">
+                        
+                        <!-- القسم 1: البيانات الأساسية ومستوى الخطر -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3.5">
+                            <h3 class="text-sm font-black text-moh-800 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <span class="w-6 h-6 rounded-full bg-moh-700 text-white text-xs flex items-center justify-center">1</span>
+                                البيانات الأساسية ومستوى الخطر
+                            </h3>
+
+                            <!-- حقل المحافظة (مقفل للمحافظات، ومتاح للغرفة المركزية) -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                    <span>المحافظة المُبلِّغة (مسجل باسم المستخدم)</span>
+                                    <span id="govLockBadge" class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                        <i data-lucide="lock" class="w-3 h-3"></i> مثبت تلقائياً
+                                    </span>
+                                </label>
+                                <div id="govFieldContainer">
+                                    <!-- يتم حقن الحقل المناسب حسب نوع المستخدم -->
+                                </div>
+                            </div>
+
+                            <!-- مستوى الخطر -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">درجة الخطورة ومستوى التصعيد</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="severity" value="green" class="peer sr-only" checked>
+                                        <div class="p-2.5 rounded-xl border-2 border-slate-200 bg-white text-center peer-checked:border-emerald-600 peer-checked:bg-emerald-50 transition">
+                                            <span class="block w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-1"></span>
+                                            <span class="text-xs font-black text-emerald-800">أخضر (عادي)</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="severity" value="yellow" class="peer sr-only">
+                                        <div class="p-2.5 rounded-xl border-2 border-slate-200 bg-white text-center peer-checked:border-amber-500 peer-checked:bg-amber-50 transition">
+                                            <span class="block w-3 h-3 rounded-full bg-amber-500 mx-auto mb-1"></span>
+                                            <span class="text-xs font-black text-amber-800">أصفر (متوسط)</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="severity" value="red" class="peer sr-only">
+                                        <div class="p-2.5 rounded-xl border-2 border-slate-200 bg-white text-center peer-checked:border-red-600 peer-checked:bg-red-50 transition">
+                                            <span class="block w-3 h-3 rounded-full bg-red-600 mx-auto mb-1 animate-ping"></span>
+                                            <span class="text-xs font-black text-red-700">أحمر (عاجل)</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- القسم 2: نوع الحادث والموقع -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3.5">
+                            <h3 class="text-sm font-black text-moh-800 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <span class="w-6 h-6 rounded-full bg-moh-700 text-white text-xs flex items-center justify-center">2</span>
+                                نوع الحادث والموقع الجغرافي
+                            </h3>
+
+                            <div>
+                                <label for="incidentType" class="block text-xs font-bold text-slate-700 mb-1.5">تصنيف الحادث / الأزمة</label>
+                                <select id="incidentType" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-moh-600">
+                                    <option value="حادث طريق">🚗 حادث طريق / تصادم مروري</option>
+                                    <option value="حريق / انهيار">🔥 حريق / انهيار عقار أو منشأة</option>
+                                    <option value="انقطاع كهرباء / أكسجين">⚡ انقطاع كهرباء أو تعطل شبكة أكسجين</option>
+                                    <option value="سيول / طقس سيئ">⛈️ سيول / تقلبات جوية حادة</option>
+                                    <option value="إخلاء طبي">🚑 إخلاء طبي ونقل حالات حرجة</option>
+                                    <option value="أخرى">📋 طوارئ صحية أخرى</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="incidentLocation" class="text-xs font-bold text-slate-700">الموقع الدقيق للحادث</label>
+                                    <button type="button" id="getGpsBtn" class="text-xs font-bold text-moh-600 hover:text-moh-800 bg-sky-100 hover:bg-sky-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                        تحديد الموقع GPS
+                                    </button>
+                                </div>
+                                <input type="text" id="incidentLocation" required placeholder="مثال: الطريق الصحراوي الشرقي - أمام كافتيريا..." class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-sm font-semibold focus:ring-2 focus:ring-moh-600">
+                                <p id="gpsCoordsDisplay" class="hidden text-[11px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
+                                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                                    <span></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- القسم 3: الإحصائيات وتصنيف الحالات -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3.5">
+                            <h3 class="text-sm font-black text-moh-800 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <span class="w-6 h-6 rounded-full bg-moh-700 text-white text-xs flex items-center justify-center">3</span>
+                                الإحصائيات وتصنيف الحالات
+                            </h3>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                <div class="col-span-2 sm:col-span-3 bg-white p-2.5 rounded-xl border border-slate-300 flex items-center justify-between">
+                                    <label for="totalInjured" class="text-xs font-black text-slate-800">إجمالي المصابين (يحسب تلقائياً أو يدوياً)</label>
+                                    <input type="number" id="totalInjured" min="0" value="0" class="w-24 text-center font-black text-base text-moh-700 bg-sky-50 border border-sky-300 rounded-lg p-1.5">
+                                </div>
+
+                                <div>
+                                    <label for="criticalCount" class="block text-[11px] font-bold text-red-700 mb-1">حالات حرجة</label>
+                                    <input type="number" id="criticalCount" min="0" value="0" class="case-counter w-full bg-white border border-red-300 rounded-xl p-2 text-center font-black text-red-700">
+                                </div>
+
+                                <div>
+                                    <label for="moderateCount" class="block text-[11px] font-bold text-amber-700 mb-1">حالات متوسطة</label>
+                                    <input type="number" id="moderateCount" min="0" value="0" class="case-counter w-full bg-white border border-amber-300 rounded-xl p-2 text-center font-black text-amber-700">
+                                </div>
+
+                                <div>
+                                    <label for="minorCount" class="block text-[11px] font-bold text-emerald-700 mb-1">حالات بسيطة</label>
+                                    <input type="number" id="minorCount" min="0" value="0" class="case-counter w-full bg-white border border-emerald-300 rounded-xl p-2 text-center font-black text-emerald-700">
+                                </div>
+
+                                <div class="col-span-2 sm:col-span-3">
+                                    <label for="deathsCount" class="block text-[11px] font-bold text-slate-700 mb-1">حالات الوفيات (إن وجدت)</label>
+                                    <input type="number" id="deathsCount" min="0" value="0" class="w-full bg-white border border-slate-300 rounded-xl p-2 text-center font-black text-slate-900">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- القسم 4: الموقف بالمستشفيات والاحتياجات العاجلة -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3.5">
+                            <h3 class="text-sm font-black text-moh-800 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <span class="w-6 h-6 rounded-full bg-moh-700 text-white text-xs flex items-center justify-center">4</span>
+                                الموقف بالمستشفيات والاحتياجات العاجلة
+                            </h3>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <div class="sm:col-span-2">
+                                    <label for="hospitalsInput" class="block text-xs font-bold text-slate-700 mb-1">المستشفيات المستقبلة للحالات</label>
+                                    <input type="text" id="hospitalsInput" placeholder="مثال: مستشفى المنيا العام، صدر المنيا..." class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-semibold">
+                                </div>
+                                <div>
+                                    <label for="availableBeds" class="block text-xs font-bold text-slate-700 mb-1">الأسرة المتاحة</label>
+                                    <input type="number" id="availableBeds" min="0" placeholder="العدد" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-black text-center">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-2">الاحتياجات اللوجستية والطبية العاجلة:</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" name="needs" value="أكياس دم ومشتقاته" class="peer sr-only">
+                                        <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-600 transition">🩸 أكياس دم</span>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" name="needs" value="تخصصات طبية دقيقة" class="peer sr-only">
+                                        <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700 peer-checked:bg-moh-600 peer-checked:text-white peer-checked:border-moh-600 transition">🩺 تخصصات طبية</span>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" name="needs" value="دعم سيارات إسعاف" class="peer sr-only">
+                                        <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700 peer-checked:bg-amber-600 peer-checked:text-white peer-checked:border-amber-600 transition">🚑 سيارات إسعاف</span>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" name="needs" value="سولار / مولدات كهرباء" class="peer sr-only">
+                                        <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700 peer-checked:bg-slate-800 peer-checked:text-white peer-checked:border-slate-800 transition">⚡ سولار / مولدات</span>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" name="needs" value="إخلاء طبي / رعايات" class="peer sr-only">
+                                        <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 transition">🏥 إخلاء طبي</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="incidentNotes" class="block text-xs font-bold text-slate-700 mb-1">ملاحظات إضافية / تفاصيل الإجراءات المتخذة</label>
+                                <textarea id="incidentNotes" rows="2" placeholder="اكتب أي تفاصيل ميدانية إضافية..." class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-semibold"></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gradient-to-l from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 text-white font-black text-base py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                            إرسال واعتماد البلاغ في المنظومة
+                        </button>
+                    </form>
+                </section>
+
+                <!-- ==================== العمود الأيسر: لوحة المتابعة والتحكم اللحظي ==================== -->
+                <section class="xl:col-span-7 space-y-4">
+                    
+                    <!-- شريط الفلترة والتحكم -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 id="feedTitle" class="font-black text-base text-slate-800 flex items-center gap-2">
+                                <i data-lucide="radar" class="w-5 h-5 text-moh-600"></i>
+                                لوحة المتابعة اللحظية للبلاغات
+                            </h2>
+                            <p id="feedSubtitle" class="text-xs text-slate-500 font-semibold mt-0.5">عرض فوري للبلاغات المسجلة وحالة الاستجابة</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- فلتر المحافظات (يظهر للغرفة المركزية فقط) -->
+                            <select id="filterGovSelect" class="hidden bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold rounded-xl p-2 focus:ring-2 focus:ring-moh-600">
+                                <option value="ALL">كل المحافظات (27)</option>
+                            </select>
+
+                            <!-- فلتر مستوى الخطر -->
+                            <select id="filterSeveritySelect" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold rounded-xl p-2 focus:ring-2 focus:ring-moh-600">
+                                <option value="ALL">جميع المستويات</option>
+                                <option value="red">🔴 أحمر (عاجل)</option>
+                                <option value="yellow">🟡 أصفر (متوسط)</option>
+                                <option value="green">🟢 أخضر (عادي)</option>
+                            </select>
+
+                            <!-- فلتر الحالة -->
+                            <select id="filterStatusSelect" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold rounded-xl p-2 focus:ring-2 focus:ring-moh-600">
+                                <option value="ACTIVE">البلاغات النشطة</option>
+                                <option value="ALL">الكل (نشط + مغلق)</option>
+                                <option value="CLOSED">المغلقة فقط</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- قائمة بطاقات البلاغات -->
+                    <div id="reportsContainer" class="space-y-4">
+                        <!-- يتم توليد البطاقات برمجياً هنا -->
+                    </div>
+                </section>
+
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-                لجعل البلاغات تظهر <strong>لايف في نفس الثانية</strong> على جميع الموبايلات وأجهزة الكمبيوتر:
-                <br>1. أنشئ مشروعاً مجانياً على <strong>console.firebase.google.com</strong>
-                <br>2. فعّل <strong>Firestore Database</strong> (وضع الاختبار Test Mode).
-                <br>3. انسخ كائن <code>firebaseConfig</code> والصقه هنا:
-            </p>
-            <textarea id="firebase-config-input" rows="6" placeholder='{
+        </main>
+
+        <!-- الفوتر الرسمي -->
+        <footer class="bg-moh-900 text-slate-400 text-xs py-4 px-4 text-center border-t border-slate-800 mt-10">
+            <p class="font-bold text-slate-300">وزارة الصحة والسكان — الإدارة المركزية للطوارئ والرعاية الحرجة — مركز التحكم الرئيسي</p>
+            <p class="mt-1">منظومة الربط اللحظي بين مديريات الشئون الصحية بالمحافظات وهيئة الإسعاف المصرية</p>
+        </footer>
+    </div>
+
+    <!-- ==================== نافذة إعدادات الربط السحابي (Firebase Firestore) ==================== -->
+    <div id="firebaseModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-moh-900 text-white px-5 py-4 flex items-center justify-between">
+                <h3 class="font-black text-base flex items-center gap-2">
+                    <i data-lucide="cloud-cog" class="w-5 h-5 text-sky-400"></i>
+                    إعدادات الربط اللحظي بين المحافظات (Firebase)
+                </h3>
+                <button type="button" onclick="closeModal('firebaseModal')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-sm">
+                <p class="text-slate-600 text-xs leading-relaxed">
+                    تعمل المنظومة افتراضياً في <strong>الوضع المحلي (LocalStorage)</strong>. لمزامنة البلاغات لحظياً بين أجهزة المحافظات الـ 27 والغرفة المركزية، الصق كائن إعدادات <code class="bg-slate-100 px-1.5 py-0.5 rounded text-moh-700 font-bold">firebaseConfig</code> بصيغة JSON أدناه:
+                </p>
+                <textarea id="firebaseConfigInput" rows="6" placeholder='{
   "apiKey": "AIzaSy...",
-  "authDomain": "...",
-  "projectId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "...",
-  "appId": "..."
-}' class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-xs font-mono text-emerald-300 text-left" dir="ltr"></textarea>
-            <div class="flex gap-2 justify-end">
-                <button onclick="clearFirebaseConfig()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-bold rounded-xl text-slate-300">إلغاء الربط</button>
-                <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-bold rounded-xl text-white">حفظ وتفعيل الربط اللايف</button>
+  "authDomain": "project-id.firebaseapp.com",
+  "projectId": "project-id",
+  "storageBucket": "project-id.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}' class="w-full font-mono text-xs bg-slate-900 text-emerald-400 p-3 rounded-xl border border-slate-700 focus:ring-2 focus:ring-sky-500" dir="ltr"></textarea>
+
+                <div class="flex items-center justify-between gap-2 pt-2">
+                    <button type="button" onclick="clearFirebaseConfig()" class="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition">
+                        إلغاء الربط (عودة للمحلي)
+                    </button>
+                    <button type="button" onclick="saveFirebaseConfig()" class="px-5 py-2.5 rounded-xl bg-moh-600 hover:bg-moh-700 text-white font-black text-xs shadow transition">
+                        حفظ وتفعيل الربط اللحظي
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDKs (Compat for single-file instant execution) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <!-- ==================== نافذة إدارة رموز الدخول (للغرفة المركزية) ==================== -->
+    <div id="pinsModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="bg-moh-900 text-white px-5 py-4 flex items-center justify-between shrink-0">
+                <h3 class="font-black text-base flex items-center gap-2">
+                    <i data-lucide="key-round" class="w-5 h-5 text-amber-400"></i>
+                    إدارة رموز الدخول السرية (PIN) للجهات
+                </h3>
+                <button type="button" onclick="closeModal('pinsModal')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-3 flex-1" id="pinsListContainer">
+                <!-- يتم توليد قائمة تعديل الرموز هنا -->
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
+                <button type="button" onclick="resetDefaultPins()" class="text-xs font-bold text-red-600 hover:underline">استعادة الرموز الافتراضية</button>
+                <button type="button" onclick="saveCustomPins()" class="px-5 py-2 rounded-xl bg-moh-700 hover:bg-moh-800 text-white font-black text-xs">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        let isMuted = false;
-        let audioCtx = null;
-        let db = null;
-        let isLiveMode = false;
+    <!-- ==================== إشعار منبثق (Toast Notification) ==================== -->
+    <div id="toastContainer" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ==================== المنطق البرمجي المتكامل ==================== -->
+    <script type="module">
+        // استيراد وحدات Firebase SDK (نسخة 10 الحديثة) للعمل عند توفر إعدادات الربط
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // قائمة الـ 27 محافظة لجمهورية مصر العربية
+        const GOVERNORATES = [
+            "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية",
+            "الدقهلية", "البحيرة", "المنوفية", "الغربية", "كفر الشيخ",
+            "دمياط", "بورسعيد", "الإسماعيلية", "السويس", "شمال سيناء",
+            "جنوب سيناء", "بني سويف", "الفيوم", "المنيا", "أسيوط",
+            "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر",
+            "الوادي الجديد", "مطروح"
+        ];
+
+        // المفاتيح التخزينية في LocalStorage
+        const STORAGE_KEYS = {
+            SESSION: 'moh_emergency_session_v2',
+            REPORTS: 'moh_emergency_reports_v2',
+            PINS: 'moh_emergency_pins_v2',
+            FB_CONFIG: 'moh_emergency_fb_config_v2'
+        };
+
+        // حالة التطبيق
+        let currentUser = null; // { id: 'CENTRAL' | 'القاهرة', name: '...', role: 'central' | 'gov' }
+        let reportsList = [];
+        let soundEnabled = true;
+        let firestoreDb = null;
+        let unsubscribeFirestore = null;
         let knownReportIds = new Set();
         let isInitialLoad = true;
 
-        const ALL_GOVERNORATES = [
-            "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية",
-            "البحيرة", "المنوفية", "الغربية", "كفر الشيخ", "دمياط", "بورسعيد",
-            "الإسماعيلية", "السويس", "شمال سيناء", "جنوب سيناء", "بني سويف",
-            "الفيوم", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان",
-            "البحر الأحمر", "الوادي الجديد", "مطروح"
-        ];
+        // ==================== 1. تهيئة القوائم والرموز ====================
+        function initApp() {
+            populateGovernorateDropdowns();
+            initPinsIfNeeded();
+            bindEvents();
+            lucide.createIcons();
 
-        let reports = [
-            {
-                id: 'REP-1042',
-                governorate: 'الجيزة',
-                risk: 'أحمر',
-                types: ['حادث طريق'],
-                location: 'طريق القاهرة الإسكندرية الصحراوي - كم 45 (30.0891, 30.9512)',
-                totalInjured: 14,
-                critical: 4,
-                moderate: 6,
-                minor: 4,
-                deaths: 1,
-                hospitals: 'مستشفى الشيخ زايد التخصصي، مستشفى الهرم',
-                beds: '2 رعاية مركزة، 0 حضانات',
-                needs: ['أكياس دم', 'سيارات إسعاف'],
-                timestampText: 'نموذج تجريبي',
-                createdAt: Date.now() - 600000,
-                status: 'نشط'
-            }
-        ];
-
-        window.onload = function() {
-            // Populate filter dropdown
-            const filterSelect = document.getElementById('filter-gov');
-            ALL_GOVERNORATES.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g;
-                opt.textContent = g;
-                filterSelect.appendChild(opt);
-            });
-
-            // Check saved Firebase config
-            const savedConfig = localStorage.getItem('emergency_firebase_config');
-            if (savedConfig) {
+            // التحقق من وجود جلسة محفوظة
+            const savedSession = localStorage.getItem(STORAGE_KEYS.SESSION);
+            if (savedSession) {
                 try {
-                    initFirebase(JSON.parse(savedConfig));
+                    currentUser = JSON.parse(savedSession);
+                    enterMainSystem();
                 } catch (e) {
-                    console.error("Invalid saved config", e);
+                    localStorage.removeItem(STORAGE_KEYS.SESSION);
                 }
             }
-            renderDashboard();
-        };
-
-        function initFirebase(config) {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(config);
-            }
-            db = firebase.firestore();
-            isLiveMode = true;
-
-            const statusBadge = document.getElementById('connection-status');
-            statusBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold";
-            statusBadge.textContent = "🟢 متصل لايف (مزامنة فورية)";
-
-            // Real-time listener on Firestore collection
-            db.collection("emergency_reports")
-              .orderBy("createdAt", "desc")
-              .limit(100)
-              .onSnapshot((snapshot) => {
-                  const liveReports = [];
-                  snapshot.forEach((doc) => {
-                      const data = doc.data();
-                      data.docId = doc.id;
-                      liveReports.push(data);
-
-                      // Trigger alert for NEW incoming reports on other devices
-                      if (!isInitialLoad && !knownReportIds.has(doc.id) && data.status === 'نشط') {
-                          if (data.risk === 'أحمر' || data.risk === 'أصفر') {
-                              playAlertSound(data.risk);
-                          }
-                          showAlertBanner(data.risk, data.governorate);
-                      }
-                      knownReportIds.add(doc.id);
-                  });
-
-                  reports = liveReports;
-                  isInitialLoad = false;
-                  renderDashboard();
-              }, (error) => {
-                  console.error("Firestore Error:", error);
-                  alert("تعذر الاتصال بقاعدة البيانات. تأكد من إعدادات Firestore Rules.");
-              });
         }
 
-        function openConfigModal() {
-            const saved = localStorage.getItem('emergency_firebase_config') || '';
-            document.getElementById('firebase-config-input').value = saved;
-            document.getElementById('config-modal').classList.remove('hidden');
+        function populateGovernorateDropdowns() {
+            const loginOptgroup = document.querySelector('#userSelect optgroup');
+            const filterGovSelect = document.getElementById('filterGovSelect');
+
+            GOVERNORATES.forEach(gov => {
+                // قائمة تسجيل الدخول
+                const opt = document.createElement('option');
+                opt.value = gov;
+                opt.textContent = `مديرية الصحة بـ ${gov}`;
+                loginOptgroup.appendChild(opt);
+
+                // قائمة الفلترة للغرفة المركزية
+                const filterOpt = document.createElement('option');
+                filterOpt.value = gov;
+                filterOpt.textContent = gov;
+                filterGovSelect.appendChild(filterOpt);
+            });
         }
 
-        function closeConfigModal() {
-            document.getElementById('config-modal').classList.add('hidden');
-        }
-
-        function saveFirebaseConfig() {
-            const raw = document.getElementById('firebase-config-input').value.trim();
-            try {
-                // Clean JS object syntax if pasted directly from Firebase Console
-                const jsonStr = raw.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
-                const parsed = JSON.parse(jsonStr);
-                localStorage.setItem('emergency_firebase_config', JSON.stringify(parsed));
-                location.reload();
-            } catch (e) {
-                alert("صيغة الكود غير صحيحة. تأكد من نسخ ما بين القوسين { ... } بشكل كامل.");
+        function initPinsIfNeeded() {
+            if (!localStorage.getItem(STORAGE_KEYS.PINS)) {
+                const defaultPins = { CENTRAL: '0000' };
+                GOVERNORATES.forEach(gov => {
+                    defaultPins[gov] = '1111';
+                });
+                localStorage.setItem(STORAGE_KEYS.PINS, JSON.stringify(defaultPins));
             }
         }
 
-        function clearFirebaseConfig() {
-            localStorage.removeItem('emergency_firebase_config');
-            location.reload();
+        function getPinsMap() {
+            initPinsIfNeeded();
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.PINS));
         }
 
-        function switchTab(tab) {
-            const viewForm = document.getElementById('view-form');
-            const viewDash = document.getElementById('view-dashboard');
-            const tabForm = document.getElementById('tab-form');
-            const tabDash = document.getElementById('tab-dashboard');
-
-            if (tab === 'form') {
-                viewForm.classList.remove('hidden');
-                viewDash.classList.add('hidden');
-                tabForm.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md';
-                tabDash.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
-            } else {
-                viewForm.classList.add('hidden');
-                viewDash.classList.remove('hidden');
-                tabDash.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md';
-                tabForm.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
-                renderDashboard();
-            }
-        }
-
-        function selectRisk(level) {
-            document.getElementById('risk-level').value = level;
-            document.querySelectorAll('.risk-btn').forEach(btn => {
-                btn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1';
+        // ==================== 2. إدارة تسجيل الدخول والخروج ====================
+        function bindEvents() {
+            // زر تعبئة الرمز الافتراضي للتجربة السريعة
+            document.getElementById('fillDemoPinBtn').addEventListener('click', () => {
+                const selectedVal = document.getElementById('userSelect').value;
+                const pins = getPinsMap();
+                if (!selectedVal) {
+                    showLoginError('يرجى اختيار الجهة أو المحافظة أولاً.');
+                    return;
+                }
+                document.getElementById('pinInput').value = pins[selectedVal] || (selectedVal === 'CENTRAL' ? '0000' : '1111');
+                document.getElementById('loginError').classList.add('hidden');
             });
 
-            const activeBtn = document.getElementById('risk-' + level);
-            if (level === 'أخضر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-emerald-500/50';
-            } else if (level === 'أصفر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-amber-400/50';
-            } else if (level === 'أحمر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-red-500 bg-red-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-red-500/50';
-            }
-        }
+            // إرسال نموذج تسجيل الدخول
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const selectedUser = document.getElementById('userSelect').value;
+                const enteredPin = document.getElementById('pinInput').value.trim();
+                const pins = getPinsMap();
 
-        function fetchGPS() {
-            const btn = document.getElementById('gps-btn');
-            const locInput = document.getElementById('location');
-            btn.innerHTML = '<span>⏳</span><span>جاري التحديد...</span>';
+                if (!selectedUser) {
+                    showLoginError('يرجى اختيار الجهة المسؤولة من القائمة.');
+                    return;
+                }
 
-            if (navigator.geolocation) {
+                const validPin = pins[selectedUser];
+                if (enteredPin !== validPin) {
+                    showLoginError('رمز الدخول السري (PIN) غير صحيح لهذه الجهة.');
+                    return;
+                }
+
+                // نجاح الدخول
+                currentUser = {
+                    id: selectedUser,
+                    role: selectedUser === 'CENTRAL' ? 'central' : 'gov',
+                    name: selectedUser === 'CENTRAL' ? 'الغرفة المركزية - تحكم رئيسي' : `مديرية الصحة بـ ${selectedUser}`
+                };
+
+                localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(currentUser));
+                document.getElementById('loginError').classList.add('hidden');
+                enterMainSystem();
+            });
+
+            // زر تسجيل الخروج
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (unsubscribeFirestore) {
+                    unsubscribeFirestore();
+                    unsubscribeFirestore = null;
+                }
+                localStorage.removeItem(STORAGE_KEYS.SESSION);
+                currentUser = null;
+                isInitialLoad = true;
+                knownReportIds.clear();
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('pinInput').value = '';
+            });
+
+            // زر الصوت
+            document.getElementById('toggleSoundBtn').addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                const icon = document.getElementById('soundIcon');
+                const btn = document.getElementById('toggleSoundBtn');
+                if (soundEnabled) {
+                    icon.setAttribute('data-lucide', 'volume-2');
+                    btn.classList.replace('text-slate-400', 'text-amber-400');
+                    showToast('تم تفعيل التنبيهات الصوتية للبلاغات العاجلة', 'info');
+                } else {
+                    icon.setAttribute('data-lucide', 'volume-x');
+                    btn.classList.replace('text-amber-400', 'text-slate-400');
+                    showToast('تم كتم التنبيهات الصوتية', 'info');
+                }
+                lucide.createIcons();
+            });
+
+            // حساب إجمالي المصابين تلقائياً عند تغيير الفئات
+            document.querySelectorAll('.case-counter').forEach(input => {
+                input.addEventListener('input', () => {
+                    const c = parseInt(document.getElementById('criticalCount').value) || 0;
+                    const m = parseInt(document.getElementById('moderateCount').value) || 0;
+                    const l = parseInt(document.getElementById('minorCount').value) || 0;
+                    document.getElementById('totalInjured').value = c + m + l;
+                });
+            });
+
+            // تحديد الموقع GPS
+            document.getElementById('getGpsBtn').addEventListener('click', () => {
+                const display = document.getElementById('gpsCoordsDisplay');
+                if (!navigator.geolocation) {
+                    showToast('المتصفح لا يدعم تحديد الموقع الجغرافي GPS', 'error');
+                    return;
+                }
+                display.classList.remove('hidden');
+                display.querySelector('span').textContent = 'جاري التقاط الإحداثيات عبر الأقمار الصناعية...';
+
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        locInput.value = `إحداثيات GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-                        btn.innerHTML = '<span>✅</span><span>تم التحديد</span>';
+                        const lat = pos.coords.latitude.toFixed(5);
+                        const lng = pos.coords.longitude.toFixed(5);
+                        display.querySelector('span').textContent = `تم تحديد الإحداثيات بدقة: (${lat}, ${lng})`;
+                        const locInput = document.getElementById('incidentLocation');
+                        if (!locInput.value.includes('GPS:')) {
+                            locInput.value = `${locInput.value} [GPS: ${lat}, ${lng}]`.trim();
+                        }
+                        showToast('تم إرفاق إحداثيات الموقع بنجاح', 'success');
                     },
                     () => {
-                        locInput.value = 'إحداثيات GPS: 30.0444, 31.2357 (تعذر الوصول للموقع الدقيق)';
-                        btn.innerHTML = '<span>⚠️</span><span>تم وضع إحداثي افتراضي</span>';
-                    },
-                    { timeout: 5000 }
+                        display.querySelector('span').textContent = 'تعذر الوصول للموقع تلقائياً، يرجى التأكد من تفعيل إذن الموقع.';
+                        showToast('يرجى السماح للمتصفح بالوصول للموقع', 'error');
+                    }
                 );
+            });
+
+            // إرسال نموذج البلاغ
+            document.getElementById('incidentForm').addEventListener('submit', handleIncidentSubmit);
+
+            // فلاتر لوحة المتابعة
+            document.getElementById('filterGovSelect').addEventListener('change', renderReports);
+            document.getElementById('filterSeveritySelect').addEventListener('change', renderReports);
+            document.getElementById('filterStatusSelect').addEventListener('change', renderReports);
+        }
+
+        function showLoginError(msg) {
+            const errBox = document.getElementById('loginError');
+            document.getElementById('loginErrorText').textContent = msg;
+            errBox.classList.remove('hidden');
+        }
+
+        // ==================== 3. تهيئة واجهة النظام حسب صلاحية المستخدم ====================
+        function enterMainSystem() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            // تحديث شارة المستخدم في الهيدر
+            document.getElementById('currentUserNameDisplay').textContent = currentUser.name;
+
+            const govContainer = document.getElementById('govFieldContainer');
+            const govLockBadge = document.getElementById('govLockBadge');
+            const filterGovSelect = document.getElementById('filterGovSelect');
+            const managePinsBtn = document.getElementById('managePinsBtn');
+
+            if (currentUser.role === 'gov') {
+                // مستخدم محافظة: تثبيت اسم المحافظة للقراءة فقط ومنع التغيير
+                govLockBadge.classList.remove('hidden');
+                filterGovSelect.classList.add('hidden');
+                managePinsBtn.classList.add('hidden');
+
+                govContainer.innerHTML = `
+                    <div class="relative">
+                        <input type="text" id="reportGovernorate" value="${currentUser.id}" readonly 
+                               class="w-full bg-slate-200/80 border-2 border-slate-300 text-slate-900 font-black text-sm rounded-xl p-2.5 cursor-not-allowed select-none">
+                        <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-500">محافظة مسجلة</span>
+                    </div>
+                `;
+
+                document.getElementById('feedTitle').innerHTML = `<i data-lucide="radar" class="w-5 h-5 text-moh-600"></i> بلاغات الطوارئ — محافظة ${currentUser.id}`;
+                document.getElementById('feedSubtitle').textContent = `متابعة البلاغات الصادرة من مديرية الصحة بـ ${currentUser.id} وحالة الاستجابة المركزية`;
             } else {
-                locInput.value = 'المتصفح لا يدعم تحديد الموقع';
-                btn.innerHTML = '<span>❌</span><span>غير مدعوم</span>';
-            }
-        }
+                // الغرفة المركزية: حرية اختيار المحافظة للإبلاغ بالنيابة + فلترة شاملة + إدارة الرموز
+                govLockBadge.classList.add('hidden');
+                filterGovSelect.classList.remove('hidden');
+                managePinsBtn.classList.remove('hidden');
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('mute-icon').textContent = isMuted ? '🔇' : '🔊';
-            document.getElementById('mute-text').textContent = isMuted ? 'مكتوم' : 'الصوت مفعل';
-        }
+                let optionsHtml = GOVERNORATES.map(g => `<option value="${g}">${g}</option>`).join('');
+                govContainer.innerHTML = `
+                    <select id="reportGovernorate" required class="w-full bg-white border-2 border-sky-300 text-slate-900 font-black text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-moh-600">
+                        <option value="" disabled selected>-- اختر المحافظة المعنية بالبلاغ --</option>
+                        ${optionsHtml}
+                    </select>
+                `;
 
-        function playAlertSound(riskLevel) {
-            if (isMuted) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
-                const now = audioCtx.currentTime;
-                const beeps = riskLevel === 'أحمر' ? 4 : 2;
-                const freq = riskLevel === 'أحمر' ? 880 : 660;
-
-                for (let i = 0; i < beeps; i++) {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = riskLevel === 'أحمر' ? 'sawtooth' : 'sine';
-                    osc.frequency.setValueAtTime(freq, now + i * 0.25);
-                    gain.gain.setValueAtTime(0.2, now + i * 0.25);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.25 + 0.18);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(now + i * 0.25);
-                    osc.stop(now + i * 0.25 + 0.18);
-                }
-            } catch (e) { console.log(e); }
-        }
-
-        function showAlertBanner(risk, governorate) {
-            const banner = document.getElementById('alert-banner');
-            const title = document.getElementById('alert-title');
-            const msg = document.getElementById('alert-message');
-
-            banner.classList.remove('hidden', 'bg-red-700', 'border-red-400', 'bg-amber-600', 'border-amber-300', 'bg-emerald-700', 'border-emerald-400');
-
-            if (risk === 'أحمر') {
-                banner.classList.add('bg-red-700', 'border-red-400');
-                title.textContent = '🚨 تنبيه طوارئ عاجل (كود أحمر)';
-            } else if (risk === 'أصفر') {
-                banner.classList.add('bg-amber-600', 'border-amber-300');
-                title.textContent = '⚠️ تنبيه طوارئ متوسط (كود أصفر)';
-            } else {
-                banner.classList.add('bg-emerald-700', 'border-emerald-400');
-                title.textContent = '✅ تم تسجيل بلاغ (كود أخضر)';
+                document.getElementById('feedTitle').innerHTML = `<i data-lucide="radar" class="w-5 h-5 text-red-600"></i> غرفة التحكم المركزية — متابعة الـ 27 محافظة`;
+                document.getElementById('feedSubtitle').textContent = `رصد لحظي لكافة البلاغات الواردة من جميع مديريات الشئون الصحية بالجمهورية`;
             }
 
-            msg.textContent = `ورد بلاغ [${risk}] من محافظة [${governorate}] وتم تعميمه على الغرفة المركزية.`;
+            lucide.createIcons();
+            initDataSync();
         }
 
-        function dismissAlert() {
-            document.getElementById('alert-banner').classList.add('hidden');
-        }
-
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-
-            const gov = document.getElementById('governorate').value;
-            const risk = document.getElementById('risk-level').value;
-            const loc = document.getElementById('location').value;
-            const types = Array.from(document.querySelectorAll('input[name="incident_type"]:checked')).map(el => el.value);
-            const needs = Array.from(document.querySelectorAll('input[name="urgent_needs"]:checked')).map(el => el.value);
-
-            const now = new Date();
-            const timeFormatted = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) + ' - ' + now.toLocaleDateString('ar-EG');
-
-            const newReport = {
-                id: 'REP-' + Math.floor(1000 + Math.random() * 9000),
-                governorate: gov,
-                risk: risk,
-                types: types.length > 0 ? types : ['بلاغ عام'],
-                location: loc,
-                totalInjured: parseInt(document.getElementById('total-injured').value) || 0,
-                critical: parseInt(document.getElementById('critical-cases').value) || 0,
-                moderate: parseInt(document.getElementById('moderate-cases').value) || 0,
-                minor: parseInt(document.getElementById('minor-cases').value) || 0,
-                deaths: parseInt(document.getElementById('deaths').value) || 0,
-                hospitals: document.getElementById('hospitals').value || 'لم يحدد',
-                beds: document.getElementById('beds').value || 'غير مسجل',
-                needs: needs,
-                timestampText: timeFormatted,
-                createdAt: Date.now(),
-                status: 'نشط'
-            };
-
-            if (isLiveMode && db) {
+        // ==================== 4. إدارة البيانات (LocalStorage + Firebase Firestore) ====================
+        function initDataSync() {
+            const savedFbConfig = localStorage.getItem(STORAGE_KEYS.FB_CONFIG);
+            if (savedFbConfig) {
                 try {
-                    const docRef = await db.collection("emergency_reports").add(newReport);
-                    knownReportIds.add(docRef.id);
-                } catch (err) {
-                    alert("حدث خطأ أثناء الإرسال للسيرفر: " + err.message);
+                    const configObj = JSON.parse(savedFbConfig);
+                    document.getElementById('firebaseConfigInput').value = JSON.stringify(configObj, null, 2);
+                    connectToFirebase(configObj);
+                    return;
+                } catch (e) {
+                    console.error("Invalid Firebase config:", e);
                 }
-            } else {
-                reports.unshift(newReport);
             }
-
-            if (risk === 'أحمر' || risk === 'أصفر') playAlertSound(risk);
-            showAlertBanner(risk, gov);
-
-            document.getElementById('emergency-form').reset();
-            selectRisk('أحمر');
-            document.getElementById('gps-btn').innerHTML = '<span>📍</span><span>تحديد الموقع GPS تلقائياً</span>';
-            submitBtn.disabled = false;
-            switchTab('dashboard');
+            // العمل بالوضع المحلي مع بيانات تجريبية أولية إذا كانت فارغة
+            setSyncStatusUI(false);
+            loadLocalReports();
         }
 
-        async function closeReport(id, docId) {
-            if (isLiveMode && db && docId) {
-                await db.collection("emergency_reports").doc(docId).update({ status: 'مغلق' });
+        function setSyncStatusUI(isCloud) {
+            const statusText = document.getElementById('syncStatusText');
+            const statusBtn = document.getElementById('syncStatusBtn');
+            if (isCloud) {
+                statusText.textContent = 'متصل سحابياً (Live)';
+                statusBtn.classList.remove('border-slate-600');
+                statusBtn.classList.add('border-emerald-500', 'bg-emerald-950/50');
             } else {
-                const report = reports.find(r => r.id === id);
-                if (report) {
-                    report.status = 'مغلق';
-                    renderDashboard();
-                }
+                statusText.textContent = 'وضع محلي (Local)';
+                statusBtn.classList.remove('border-emerald-500', 'bg-emerald-950/50');
+                statusBtn.classList.add('border-slate-600');
             }
         }
 
-        function renderDashboard() {
-            const list = document.getElementById('reports-list');
-            const badge = document.getElementById('active-badge');
-            const stats = document.getElementById('dashboard-stats');
-            const filterGov = document.getElementById('filter-gov').value;
+        function connectToFirebase(configObj) {
+            try {
+                const app = initializeApp(configObj, 'mohEmergencyApp_' + Date.now());
+                firestoreDb = getFirestore(app);
+                setSyncStatusUI(true);
 
-            const filteredReports = filterGov === 'ALL' ? reports : reports.filter(r => r.governorate === filterGov);
-            const activeCount = reports.filter(r => r.status === 'نشط').length;
-            
-            badge.textContent = activeCount;
-            stats.textContent = `النشطة: ${activeCount} | المعروضة: ${filteredReports.length}`;
+                const q = query(collection(firestoreDb, 'emergency_reports'), orderBy('timestamp', 'desc'));
+                unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+                    const incoming = [];
+                    snapshot.forEach(docSnap => {
+                        incoming.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    processIncomingReports(incoming);
+                }, (error) => {
+                    console.error("Firestore error:", error);
+                    showToast('تعذر الاتصال بـ Firebase، تم التحويل للوضع المحلي', 'error');
+                    setSyncStatusUI(false);
+                    loadLocalReports();
+                });
+            } catch (err) {
+                showToast('خطأ في إعدادات Firebase Config', 'error');
+                setSyncStatusUI(false);
+                loadLocalReports();
+            }
+        }
 
-            if (filteredReports.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">لا توجد بلاغات مطابقة حالياً</div>';
+        function loadLocalReports() {
+            let stored = localStorage.getItem(STORAGE_KEYS.REPORTS);
+            if (!stored) {
+                // إضافة بلاغين توضيحيين عند التشغيل لأول مرة
+                const demoReports = [
+                    {
+                        id: 'REP-' + (Date.now() - 3600000),
+                        governorate: 'المنيا',
+                        reportedBy: 'مديرية الصحة بـ المنيا',
+                        severity: 'red',
+                        type: 'حادث طريق',
+                        location: 'الطريق الصحراوي الشرقي القديم بعد كافتيريا أولاد بعجر اتجاه أسيوط',
+                        totalInjured: 11,
+                        critical: 3,
+                        moderate: 5,
+                        minor: 3,
+                        deaths: 0,
+                        hospitals: 'مستشفى صدر المنيا، مستشفى المنيا العام',
+                        availableBeds: 24,
+                        needs: ['أكياس دم ومشتقاته', 'تخصصات طبية دقيقة'],
+                        notes: 'تم الدفع بـ 8 سيارات إسعاف ورفع درجة الاستعداد القصوى بأقسام الطوارئ.',
+                        status: 'active',
+                        timestamp: Date.now() - 3600000
+                    },
+                    {
+                        id: 'REP-' + (Date.now() - 7200000),
+                        governorate: 'القاهرة',
+                        reportedBy: 'مديرية الصحة بـ القاهرة',
+                        severity: 'yellow',
+                        type: 'انقطاع كهرباء / أكسجين',
+                        location: 'محيط مستشفى شبرا العام - صيانة محول رئيسي',
+                        totalInjured: 0,
+                        critical: 0,
+                        moderate: 0,
+                        minor: 0,
+                        deaths: 0,
+                        hospitals: 'مستشفى شبرا العام',
+                        availableBeds: 45,
+                        needs: ['سولار / مولدات كهرباء'],
+                        notes: 'المولدات الاحتياطية تعمل بكفاءة 100% وتم توفير مخزون سولار إضافي.',
+                        status: 'active',
+                        timestamp: Date.now() - 7200000
+                    }
+                ];
+                localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(demoReports));
+                stored = JSON.stringify(demoReports);
+            }
+            processIncomingReports(JSON.parse(stored));
+        }
+
+        function processIncomingReports(allReports) {
+            // التحقق من وصول بلاغ أحمر جديد لتشغيل التنبيه الصوتي
+            if (!isInitialLoad) {
+                allReports.forEach(rep => {
+                    if (!knownReportIds.has(rep.id) && rep.severity === 'red' && rep.status === 'active') {
+                        // تنبيه الغرفة المركزية أو المحافظة المعنية
+                        if (currentUser.role === 'central' || currentUser.id === rep.governorate) {
+                            triggerRedAlertSound();
+                            showToast(`🚨 بلاغ أحمر عاجل من محافظة ${rep.governorate}: ${rep.type}`, 'error');
+                        }
+                    }
+                });
+            }
+
+            allReports.forEach(r => knownReportIds.add(r.id));
+            isInitialLoad = false;
+            reportsList = allReports;
+            renderReports();
+        }
+
+        // ==================== 5. إرسال وتحديث البلاغات ====================
+        async function handleIncidentSubmit(e) {
+            e.preventDefault();
+
+            const govValue = document.getElementById('reportGovernorate').value;
+            if (!govValue) {
+                showToast('يرجى تحديد المحافظة أولاً', 'error');
                 return;
             }
 
-            list.innerHTML = filteredReports.map(r => {
-                const isClosed = r.status === 'مغلق';
-                let borderClass = 'border-slate-700';
-                let riskBadgeClass = 'bg-emerald-600 text-white';
+            // الأمان الإضافي: التأكد أن مستخدم المحافظة لا يمكنه الإبلاغ إلا باسم محافظته
+            const finalGovernorate = currentUser.role === 'gov' ? currentUser.id : govValue;
 
-                if (!isClosed) {
-                    if (r.risk === 'أحمر') {
-                        borderClass = 'border-red-500 animate-urgent';
-                        riskBadgeClass = 'bg-red-600 text-white';
-                    } else if (r.risk === 'أصفر') {
-                        borderClass = 'border-amber-500';
-                        riskBadgeClass = 'bg-amber-500 text-slate-900';
-                    }
-                } else {
-                    borderClass = 'border-slate-800 opacity-65';
-                    riskBadgeClass = 'bg-slate-600 text-slate-300';
+            const selectedNeeds = Array.from(document.querySelectorAll('input[name="needs"]:checked')).map(cb => cb.value);
+
+            const newReport = {
+                governorate: finalGovernorate,
+                reportedBy: currentUser.name,
+                severity: document.querySelector('input[name="severity"]:checked').value,
+                type: document.getElementById('incidentType').value,
+                location: document.getElementById('incidentLocation').value.trim(),
+                totalInjured: parseInt(document.getElementById('totalInjured').value) || 0,
+                critical: parseInt(document.getElementById('criticalCount').value) || 0,
+                moderate: parseInt(document.getElementById('moderateCount').value) || 0,
+                minor: parseInt(document.getElementById('minorCount').value) || 0,
+                deaths: parseInt(document.getElementById('deathsCount').value) || 0,
+                hospitals: document.getElementById('hospitalsInput').value.trim() || 'جاري التحديد والتنسيق',
+                availableBeds: parseInt(document.getElementById('availableBeds').value) || 0,
+                needs: selectedNeeds,
+                notes: document.getElementById('incidentNotes').value.trim(),
+                status: 'active',
+                timestamp: Date.now()
+            };
+
+            if (firestoreDb) {
+                try {
+                    await addDoc(collection(firestoreDb, 'emergency_reports'), newReport);
+                    showToast(`تم إرسال البلاغ لحظياً باسم (${finalGovernorate})`, 'success');
+                } catch (err) {
+                    showToast('حدث خطأ أثناء الإرسال السحابي', 'error');
+                    return;
                 }
+            } else {
+                newReport.id = 'REP-' + Date.now();
+                const currentLocal = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS) || '[]');
+                currentLocal.unshift(newReport);
+                localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(currentLocal));
+                processIncomingReports(currentLocal);
+                showToast(`تم اعتماد البلاغ محلياً باسم (${finalGovernorate})`, 'success');
+            }
+
+            if (newReport.severity === 'red') {
+                triggerRedAlertSound();
+            }
+
+            // إعادة تعيين حقول النموذج مع الإبقاء على اسم المحافظة
+            e.target.reset();
+            if (currentUser.role === 'gov') {
+                document.getElementById('reportGovernorate').value = currentUser.id;
+            }
+            document.getElementById('gpsCoordsDisplay').classList.add('hidden');
+        }
+
+        // تغيير حالة البلاغ (إغلاق / إعادة فتح)
+        window.toggleReportStatus = async function(reportId, newStatus) {
+            if (firestoreDb) {
+                await updateDoc(doc(firestoreDb, 'emergency_reports', reportId), { status: newStatus });
+            } else {
+                const updated = reportsList.map(r => r.id === reportId ? { ...r, status: newStatus } : r);
+                localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(updated));
+                processIncomingReports(updated);
+            }
+            showToast(newStatus === 'closed' ? 'تم إغلاق البلاغ وتوثيقه بنجاح' : 'تم إعادة فتح البلاغ للمتابعة', 'info');
+        };
+
+        // حذف بلاغ (متاح للغرفة المركزية)
+        window.deleteReport = async function(reportId) {
+            if (firestoreDb) {
+                await deleteDoc(doc(firestoreDb, 'emergency_reports', reportId));
+            } else {
+                const filtered = reportsList.filter(r => r.id !== reportId);
+                localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(filtered));
+                processIncomingReports(filtered);
+            }
+            showToast('تم حذف البلاغ من السجل', 'info');
+        };
+
+        // ==================== 6. عرض البلاغات وتحديث المؤشرات ====================
+        function renderReports() {
+            const container = document.getElementById('reportsContainer');
+            const govFilter = document.getElementById('filterGovSelect').value;
+            const sevFilter = document.getElementById('filterSeveritySelect').value;
+            const statusFilter = document.getElementById('filterStatusSelect').value;
+
+            // تصفية البلاغات حسب صلاحية المستخدم أولاً
+            let visibleReports = reportsList.filter(rep => {
+                if (currentUser.role === 'gov') {
+                    return rep.governorate === currentUser.id;
+                }
+                return true;
+            });
+
+            // تحديث بطاقات الإحصائيات بناءً على البلاغات النشطة المرئية للمستخدم
+            const activeForStats = visibleReports.filter(r => r.status === 'active');
+            document.getElementById('statTotalReports').textContent = activeForStats.length;
+            document.getElementById('statRedReports').textContent = activeForStats.filter(r => r.severity === 'red').length;
+            document.getElementById('statTotalInjured').textContent = activeForStats.reduce((sum, r) => sum + (r.totalInjured || 0), 0);
+            document.getElementById('statCriticalCases').textContent = activeForStats.reduce((sum, r) => sum + (r.critical || 0), 0);
+            document.getElementById('statDeaths').textContent = activeForStats.reduce((sum, r) => sum + (r.deaths || 0), 0);
+
+            // التحكم في شريط التنبيه الأحمر العلوي
+            const activeRedReports = activeForStats.filter(r => r.severity === 'red');
+            const redBanner = document.getElementById('redAlertBanner');
+            if (activeRedReports.length > 0) {
+                redBanner.classList.remove('hidden');
+                const latestRed = activeRedReports[0];
+                document.getElementById('redAlertBannerText').textContent = 
+                    `بلاغ أحمر نشط (${activeRedReports.length}): محافظة ${latestRed.governorate} — ${latestRed.type} (${latestRed.totalInjured} مصاب)`;
+            } else {
+                redBanner.classList.add('hidden');
+            }
+
+            // تطبيق فلاتر العرض
+            const filtered = visibleReports.filter(rep => {
+                if (currentUser.role === 'central' && govFilter !== 'ALL' && rep.governorate !== govFilter) return false;
+                if (sevFilter !== 'ALL' && rep.severity !== sevFilter) return false;
+                if (statusFilter === 'ACTIVE' && rep.status !== 'active') return false;
+                if (statusFilter === 'CLOSED' && rep.status !== 'closed') return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-10 text-center border border-slate-200 shadow-sm">
+                        <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="check-circle" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-black text-slate-700 text-base">لا توجد بلاغات مطابقة لمعايير البحث الحالية</h3>
+                        <p class="text-xs text-slate-500 mt-1">الوضع مستقر في النطاق المحدد، أو يمكنك تغيير فلاتر العرض بالأعلى.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = filtered.map(rep => {
+                const isRed = rep.severity === 'red' && rep.status === 'active';
+                const sevConfig = {
+                    red: { label: 'أحمر - عاجل جداً', badge: 'bg-red-600 text-white', border: 'border-r-8 border-red-600' },
+                    yellow: { label: 'أصفر - متوسط', badge: 'bg-amber-500 text-white', border: 'border-r-8 border-amber-500' },
+                    green: { label: 'أخضر - عادي', badge: 'bg-emerald-600 text-white', border: 'border-r-8 border-emerald-600' }
+                }[rep.severity] || { label: 'عادي', badge: 'bg-slate-600 text-white', border: 'border-r-8 border-slate-400' };
+
+                const timeStr = new Date(rep.timestamp).toLocaleString('ar-EG', {
+                    hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short'
+                });
+
+                const needsHtml = (rep.needs && rep.needs.length > 0)
+                    ? rep.needs.map(n => `<span class="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-md text-[11px] font-bold">${n}</span>`).join('')
+                    : `<span class="text-xs text-slate-400">لا توجد احتياجات إضافية مطلوبة</span>`;
 
                 return `
-                <div class="bg-slate-800 border-2 ${borderClass} rounded-2xl p-4 shadow-md space-y-3 transition">
-                    <div class="flex items-start justify-between gap-2">
+                <article class="bg-white rounded-2xl shadow-sm border border-slate-200 ${sevConfig.border} ${isRed ? 'urgent-alert-card' : ''} ${rep.status === 'closed' ? 'opacity-75 bg-slate-50' : ''} p-4 sm:p-5 transition">
+                    <!-- رأس البطاقة -->
+                    <div class="flex flex-wrap items-start justify-between gap-2 pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold ${riskBadgeClass}">كود ${r.risk}</span>
-                            <span class="font-extrabold text-base text-white">محافظة ${r.governorate}</span>
-                            <span class="text-xs text-slate-400 font-mono">(${r.id})</span>
+                            <span class="px-3 py-1 rounded-xl bg-moh-900 text-white font-black text-xs sm:text-sm flex items-center gap-1.5">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-400"></i>
+                                محافظة ${rep.governorate}
+                            </span>
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-black ${sevConfig.badge}">
+                                ${sevConfig.label}
+                            </span>
+                            ${rep.status === 'closed' 
+                                ? '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700">مغلق وموثق</span>' 
+                                : '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-100 text-sky-800">قيد المتابعة</span>'}
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-emerald-400'}">${isClosed ? '⚫ مغلق' : '🟢 نشط'}</span>
-                            <span class="text-xs text-slate-400">${r.timestampText || r.timestamp || ''}</span>
+                        <div class="text-left">
+                            <span class="text-xs font-bold text-slate-500 block">${timeStr}</span>
+                            <span class="text-[11px] text-slate-400 font-semibold">بواسطة: ${rep.reportedBy || rep.governorate}</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-1.5">
-                        ${(r.types || []).map(t => `<span class="px-2.5 py-0.5 bg-slate-900 border border-slate-700 rounded-md text-xs font-bold text-blue-300">${t}</span>`).join('')}
+                    <!-- تفاصيل الحادث والموقع -->
+                    <div class="py-3 space-y-2">
+                        <div class="flex items-center gap-2 text-sm font-black text-slate-800">
+                            <span class="text-moh-700">${rep.type}:</span>
+                            <span>${rep.location}</span>
+                        </div>
+
+                        <!-- شريط أرقام الإصابات -->
+                        <div class="grid grid-cols-5 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-center">
+                            <div>
+                                <span class="block text-[10px] font-bold text-slate-500">الإجمالي</span>
+                                <span class="text-sm font-black text-slate-900">${rep.totalInjured}</span>
+                            </div>
+                            <div class="border-r border-slate-200">
+                                <span class="block text-[10px] font-bold text-red-600">حرجة</span>
+                                <span class="text-sm font-black text-red-700">${rep.critical}</span>
+                            </div>
+                            <div class="border-r border-slate-200">
+                                <span class="block text-[10px] font-bold text-amber-600">متوسطة</span>
+                                <span class="text-sm font-black text-amber-700">${rep.moderate}</span>
+                            </div>
+                            <div class="border-r border-slate-200">
+                                <span class="block text-[10px] font-bold text-emerald-600">بسيطة</span>
+                                <span class="text-sm font-black text-emerald-700">${rep.minor}</span>
+                            </div>
+                            <div class="border-r border-slate-200">
+                                <span class="block text-[10px] font-bold text-slate-700">وفيات</span>
+                                <span class="text-sm font-black text-slate-900">${rep.deaths}</span>
+                            </div>
+                        </div>
+
+                        <!-- المستشفيات والاحتياجات -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                            <div class="bg-sky-50/70 p-2.5 rounded-xl border border-sky-100">
+                                <span class="font-bold text-moh-800 block mb-0.5">🏥 المستشفيات المستقبلة:</span>
+                                <span class="text-slate-700 font-semibold">${rep.hospitals} (الأسرة المتاحة: ${rep.availableBeds})</span>
+                            </div>
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                                <span class="font-bold text-slate-700 block mb-1">📦 الاحتياجات العاجلة:</span>
+                                <div class="flex flex-wrap gap-1">${needsHtml}</div>
+                            </div>
+                        </div>
+
+                        ${rep.notes ? `<p class="text-xs text-slate-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100"><strong>ملاحظات:</strong> ${rep.notes}</p>` : ''}
                     </div>
 
-                    <p class="text-xs sm:text-sm text-slate-300"><strong class="text-slate-100">📍 الموقع:</strong> ${r.location}</p>
-
-                    <div class="grid grid-cols-5 gap-1.5 bg-slate-900/80 p-2.5 rounded-xl text-center border border-slate-700/50">
-                        <div><div class="text-[10px] text-slate-400">الإجمالي</div><div class="font-extrabold text-sm text-white">${r.totalInjured}</div></div>
-                        <div><div class="text-[10px] text-red-400">حرج</div><div class="font-extrabold text-sm text-red-400">${r.critical}</div></div>
-                        <div><div class="text-[10px] text-amber-400">متوسط</div><div class="font-extrabold text-sm text-amber-400">${r.moderate}</div></div>
-                        <div><div class="text-[10px] text-emerald-400">بسيط</div><div class="font-extrabold text-sm text-emerald-400">${r.minor}</div></div>
-                        <div><div class="text-[10px] text-slate-400">وفيات</div><div class="font-extrabold text-sm text-slate-300">${r.deaths}</div></div>
+                    <!-- أزرار الإجراءات -->
+                    <div class="pt-2.5 border-t border-slate-100 flex items-center justify-end gap-2">
+                        ${rep.status === 'active' 
+                            ? `<button type="button" onclick="toggleReportStatus('${rep.id}', 'closed')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 transition">
+                                <i data-lucide="check-square" class="w-3.5 h-3.5"></i> إغلاق البلاغ وتوثيقه
+                               </button>`
+                            : `<button type="button" onclick="toggleReportStatus('${rep.id}', 'active')" class="px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> إعادة فتح البلاغ
+                               </button>`
+                        }
+                        ${currentUser.role === 'central' 
+                            ? `<button type="button" onclick="deleteReport('${rep.id}')" class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition" title="حذف البلاغ">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                               </button>` 
+                            : ''
+                        }
                     </div>
-
-                    <div class="text-xs text-slate-300 space-y-1">
-                        <p><strong class="text-slate-100">🏥 المستشفيات:</strong> ${r.hospitals} | <strong class="text-slate-100">🛏️ الأسرة:</strong> ${r.beds}</p>
-                        ${(r.needs && r.needs.length > 0) ? `<p><strong class="text-red-400">🚨 الاحتياج العاجل:</strong> ${r.needs.join('، ')}</p>` : ''}
-                    </div>
-
-                    ${!isClosed ? `
-                    <div class="pt-2 border-t border-slate-700 flex justify-end">
-                        <button onclick="closeReport('${r.id}', '${r.docId || ''}')" class="px-4 py-2 bg-slate-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5">
-                            <span>✅</span>
-                            <span>إغلاق البلاغ</span>
-                        </button>
-                    </div>
-                    ` : ''}
-                </div>
+                </article>
                 `;
             }).join('');
+
+            lucide.createIcons();
         }
+
+        // ==================== 7. التنبيه الصوتي المدمج (Web Audio API) ====================
+        function triggerRedAlertSound() {
+            if (!soundEnabled) return;
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+
+                // توليد نغمة إنذار طوارئ ثلاثية النبضات
+                [0, 0.25, 0.5].forEach(offset => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, now + offset);
+                    osc.frequency.exponentialRampToValueAtTime(580, now + offset + 0.18);
+
+                    gain.gain.setValueAtTime(0.18, now + offset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + offset);
+                    osc.stop(now + offset + 0.2);
+                });
+            } catch (e) {
+                console.warn('Audio playback blocked until user interaction:', e);
+            }
+        }
+
+        window.acknowledgeRedAlert = function() {
+            document.getElementById('redAlertBanner').classList.add('hidden');
+        };
+
+        // ==================== 8. إدارة النوافذ المنبثقة وإعدادات Firebase والرموز ====================
+        window.openModal = function(id) {
+            if (id === 'pinsModal') renderPinsEditor();
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.add('hidden');
+        };
+
+        window.saveFirebaseConfig = function() {
+            const raw = document.getElementById('firebaseConfigInput').value.trim();
+            try {
+                const parsed = JSON.parse(raw);
+                if (!parsed.apiKey || !parsed.projectId) {
+                    throw new Error('Missing fields');
+                }
+                localStorage.setItem(STORAGE_KEYS.FB_CONFIG, JSON.stringify(parsed));
+                closeModal('firebaseModal');
+                showToast('تم حفظ إعدادات Firebase وجاري تفعيل المزامنة...', 'success');
+                if (unsubscribeFirestore) unsubscribeFirestore();
+                connectToFirebase(parsed);
+            } catch (e) {
+                showToast('صيغة JSON غير صحيحة. تأكد من نسخ كائن firebaseConfig بدقة.', 'error');
+            }
+        };
+
+        window.clearFirebaseConfig = function() {
+            localStorage.removeItem(STORAGE_KEYS.FB_CONFIG);
+            if (unsubscribeFirestore) {
+                unsubscribeFirestore();
+                unsubscribeFirestore = null;
+            }
+            firestoreDb = null;
+            document.getElementById('firebaseConfigInput').value = '';
+            setSyncStatusUI(false);
+            loadLocalReports();
+            closeModal('firebaseModal');
+            showToast('تم إيقاف الربط السحابي والعودة للوضع المحلي', 'info');
+        };
+
+        function renderPinsEditor() {
+            const pins = getPinsMap();
+            const container = document.getElementById('pinsListContainer');
+            let html = `
+                <div class="flex items-center justify-between p-2.5 bg-red-50 rounded-xl border border-red-200">
+                    <span class="font-black text-xs text-red-800">🏛️ الغرفة المركزية - تحكم رئيسي</span>
+                    <input type="text" data-pin-key="CENTRAL" value="${pins.CENTRAL}" class="pin-edit-input w-28 text-center font-black text-sm bg-white border border-red-300 rounded-lg p-1.5">
+                </div>
+            `;
+            GOVERNORATES.forEach(gov => {
+                html += `
+                    <div class="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-xs text-slate-700">مديرية الصحة بـ ${gov}</span>
+                        <input type="text" data-pin-key="${gov}" value="${pins[gov] || '1111'}" class="pin-edit-input w-28 text-center font-black text-sm bg-white border border-slate-300 rounded-lg p-1.5">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.saveCustomPins = function() {
+            const newPins = {};
+            document.querySelectorAll('.pin-edit-input').forEach(inp => {
+                const key = inp.getAttribute('data-pin-key');
+                newPins[key] = inp.value.trim() || (key === 'CENTRAL' ? '0000' : '1111');
+            });
+            localStorage.setItem(STORAGE_KEYS.PINS, JSON.stringify(newPins));
+            closeModal('pinsModal');
+            showToast('تم حفظ رموز الدخول المحدثة بنجاح', 'success');
+        };
+
+        window.resetDefaultPins = function() {
+            localStorage.removeItem(STORAGE_KEYS.PINS);
+            initPinsIfNeeded();
+            renderPinsEditor();
+            showToast('تمت استعادة الرموز الافتراضية (0000 و 1111)', 'info');
+        };
+
+        // ==================== 9. نظام الإشعارات السريعة (Toast) ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                success: 'bg-emerald-700 text-white border-emerald-900',
+                error: 'bg-red-700 text-white border-red-900',
+                info: 'bg-moh-900 text-white border-slate-700'
+            };
+            const toast = document.createElement('div');
+            toast.className = `${colors[type]} px-4 py-3 rounded-xl shadow-xl border text-xs sm:text-sm font-bold flex items-center gap-2 transition-all transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // بدء التشغيل عند اكتمال تحميل الصفحة
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
