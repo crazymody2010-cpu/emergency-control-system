@@ -1,728 +1,1778 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظومة الطوارئ المركزية - وزارة الصحة (لايف)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Cairo -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-        @keyframes pulse-border {
-            0%, 100% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
-            50% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
-        }
-        .animate-urgent {
-            animation: pulse-border 1.5s infinite;
-        }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>منظومة الطوارئ المركزية - وزارة الصحة (لايف)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #f1f5f9;
+    }
+    .pulse-red {
+      animation: pulseRed 1.5s infinite;
+    }
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+      50% { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); }
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 9999px;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: #ffffff !important;
+      }
+      .print-sheet {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col pb-10">
+<body class="text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Top Emergency Alert Banner -->
-    <div id="alert-banner" class="hidden fixed top-0 left-0 right-0 z-50 p-4 shadow-2xl transition-all duration-300 border-b-4">
-        <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <span id="alert-icon" class="text-2xl animate-bounce">🚨</span>
-                <div>
-                    <h4 id="alert-title" class="font-extrabold text-sm sm:text-base">تنبيه عاجل</h4>
-                    <p id="alert-message" class="text-xs sm:text-sm font-semibold opacity-95"></p>
-                </div>
-            </div>
-            <button onclick="dismissAlert()" class="px-3 py-1.5 bg-black/30 hover:bg-black/50 rounded-lg text-xs font-bold transition">
-                إغلاق التنبيه
-            </button>
+  <!-- ========================================================= -->
+  <!-- 1. وضع عرض تفاصيل البلاغ في صفحة مستقلة (?reportId=...)   -->
+  <!-- ========================================================= -->
+  <div id="standaloneReportView" class="hidden min-h-screen bg-slate-100 py-6 px-4">
+    <div class="max-w-4xl mx-auto space-y-4">
+      <div class="no-print bg-slate-900 text-white rounded-2xl px-5 py-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">📄</span>
+          <div>
+            <p class="text-xs text-slate-300">عرض تفصيلي مستقل للبلاغ</p>
+            <p id="standaloneTopStatus" class="text-xs font-bold text-emerald-300">جاهز للعرض والطباعة</p>
+          </div>
         </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="standaloneToggleStatusBtn" onclick="toggleStandaloneStatus()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition cursor-pointer">
+            تغيير الحالة
+          </button>
+          <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+            <span>🖨️</span>
+            <span>طباعة / حفظ PDF</span>
+          </button>
+          <button onclick="closeStandaloneTab()" class="bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition cursor-pointer">
+            ✕ إغلاق الصفحة
+          </button>
+        </div>
+      </div>
+
+      <div id="standaloneReportContainer" class="print-sheet bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="p-10 text-center text-slate-500 font-bold">جارٍ تحميل بيانات البلاغ...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. التطبيق الرئيسي للمنظومة                               -->
+  <!-- ========================================================= -->
+  <div id="mainAppWrapper" class="min-h-screen flex flex-col">
+
+    <!-- شريط التنبيه العاجل -->
+    <div id="urgentBanner" class="hidden bg-red-600 text-white px-4 py-3 shadow-lg border-b-4 border-red-800 pulse-red">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🚨</span>
+          <div>
+            <p class="font-extrabold text-sm md:text-base" id="urgentBannerTitle">تنبيه طارئ عاجل من إحدى المحافظات</p>
+            <p class="text-xs md:text-sm text-red-100" id="urgentBannerDesc"></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="urgentBannerOpenBtn" class="bg-slate-900 text-white hover:bg-slate-800 font-bold text-xs md:text-sm px-3 py-1.5 rounded-lg transition cursor-pointer">
+            فتح تفاصيل البلاغ ↗
+          </button>
+          <button onclick="dismissUrgentBanner()" class="bg-white text-red-700 hover:bg-red-50 font-bold text-xs md:text-sm px-3 py-1.5 rounded-lg transition cursor-pointer">
+            إغلاق التنبيه
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- App Header -->
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shadow-md shadow-red-900/50">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-extrabold text-base sm:text-lg text-white leading-tight">غرفة الطوارئ المركزية</h1>
-                        <span id="connection-status" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">🟡 وضع محلي (بانتظار ربط السيرفر)</span>
-                    </div>
-                    <p class="text-xs text-slate-400">منظومة البلاغات والأزمات الموحدة - 27 محافظة</p>
-                </div>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-l from-slate-900 via-blue-950 to-slate-900 text-white p-6">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center text-2xl shadow-lg">🏥</div>
+            <div>
+              <p class="text-xs text-blue-200 font-semibold">وزارة الصحة والسكان - الإدارة المركزية للطوارئ</p>
+              <h2 class="text-xl font-extrabold">تسجيل الدخول إلى المنظومة</h2>
             </div>
-
-            <div class="flex items-center gap-2">
-                <!-- Firebase Config Button -->
-                <button onclick="openConfigModal()" class="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-blue-300 transition" title="إعدادات الربط اللحظي (Firebase)">
-                    ⚙️ ربط لايف
-                </button>
-                <!-- Sound Mute/Unmute Toggle -->
-                <button id="mute-btn" onclick="toggleMute()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition">
-                    <span id="mute-icon">🔊</span>
-                    <span id="mute-text" class="hidden sm:inline">الصوت مفعل</span>
-                </button>
-            </div>
+          </div>
+          <p class="text-xs text-slate-300 mt-3 leading-relaxed">
+            اختر اسم المحافظة لتسجيل البلاغات باسمها مباشرة، أو اختر <strong>الغرفة المركزية</strong> لمتابعة كافة المحافظات الـ 27.
+          </p>
         </div>
 
-        <!-- Navigation Tabs -->
-        <div class="max-w-3xl mx-auto px-4 flex gap-2 pb-3">
-            <button id="tab-form" onclick="switchTab('form')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md">
-                <span>📝</span>
-                <span>إرسال بلاغ جديد</span>
+        <form id="loginForm" onsubmit="handleLogin(event)" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1.5">الجهة / المحافظة <span class="text-red-600">*</span></label>
+            <select id="loginEntity" required class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold focus:border-blue-600 focus:bg-white focus:outline-none">
+              <option value="">اختر الجهة أو المحافظة...</option>
+              <option value="الغرفة المركزية" class="font-bold text-blue-900">🏛️ الغرفة المركزية (إدارة ومتابعة شاملة)</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-sm font-bold text-slate-700">رمز الدخول <span class="text-red-600">*</span></label>
+              <span class="text-[11px] text-slate-500">الافتراضي: الغرفة المركزية <code class="bg-slate-100 px-1.5 py-0.5 rounded">0000</code> | المحافظات <code class="bg-slate-100 px-1.5 py-0.5 rounded">1111</code></span>
+            </div>
+            <input type="password" id="loginPin" required placeholder="أدخل رمز الدخول..."
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-600 focus:bg-white focus:outline-none" />
+            <div class="flex flex-wrap gap-2 mt-2">
+              <button type="button" onclick="quickFillLogin('الغرفة المركزية', '0000')" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-lg transition cursor-pointer">
+                دخول سريع: الغرفة المركزية
+              </button>
+              <button type="button" onclick="quickFillLogin('القاهرة', '1111')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg transition cursor-pointer">
+                دخول سريع: محافظة القاهرة
+              </button>
+              <button type="button" onclick="quickFillLogin('الجيزة', '1111')" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-lg transition cursor-pointer">
+                دخول سريع: محافظة الجيزة
+              </button>
+            </div>
+          </div>
+
+          <p id="loginError" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
+
+          <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-3 rounded-xl shadow-md transition cursor-pointer">
+            دخول إلى المنظومة
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- الهيدر الرئيسي -->
+    <header class="bg-gradient-to-l from-slate-900 via-blue-950 to-slate-900 text-white shadow-xl sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">غرفة الطوارئ المركزية</h1>
+              <span id="syncBadge" onclick="openFirebaseModal()" title="إعدادات الربط اللحظي"
+                class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30 transition">
+                🟡 وضع محلي (بانتظار ربط السيرفر)
+              </span>
+              <span id="currentUserBadge" class="hidden inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                👤 المستخدم: <span id="currentUserName">---</span>
+              </span>
+            </div>
+            <p class="text-xs md:text-sm text-slate-300 mt-1">منظومة البلاغات والأزمات الموحدة - 27 محافظة</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openFirebaseModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600 text-xs md:text-sm font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <span>⚙️</span>
+              <span>ربط لايف</span>
             </button>
-            <button id="tab-dashboard" onclick="switchTab('dashboard')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
-                <span>📡</span>
-                <span>لوحة الغرفة المركزية</span>
-                <span id="active-badge" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-extrabold">0</span>
+
+            <button id="soundToggleBtn" onclick="toggleSound()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600 text-xs md:text-sm font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <span id="soundIcon">🔊</span>
+              <span id="soundLabel">الصوت مفعل</span>
             </button>
+
+            <button id="tabFormBtn" onclick="switchTab('form')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer">
+              <span>📝</span>
+              <span>إرسال بلاغ جديد</span>
+            </button>
+
+            <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <span>📡</span>
+              <span id="dashboardTabTitle">لوحة الغرفة المركزية</span>
+              <span id="reportsCountBadge" class="bg-red-600 text-white text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
+            </button>
+
+            <button onclick="logoutUser()" class="bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-700/60 text-xs md:text-sm font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <span>🚪</span>
+              <span>خروج</span>
+            </button>
+          </div>
         </div>
+      </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-3xl w-full mx-auto px-4 pt-5 flex-1">
+    <!-- المحتوى الرئيسي -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
 
-        <!-- VIEW 1: Submit New Report Form -->
-        <section id="view-form" class="space-y-5">
-            <form id="emergency-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
+      <!-- تبويب نموذج إرسال البلاغ -->
+      <section id="formSection" class="space-y-6">
+        <form id="incidentForm" onsubmit="submitIncident(event)" class="space-y-6">
 
-                <!-- 1. Governorate & Risk Level -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">1. البيانات الأساسية ومستوى الخطر</h2>
-                    
-                    <div>
-                        <label for="governorate" class="block text-sm font-bold text-slate-200 mb-1.5">المحافظة / المديرية (27 محافظة) <span class="text-red-400">*</span></label>
-                        <select id="governorate" required class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                            <option value="" disabled selected>اختر المحافظة...</option>
-                            <option value="القاهرة">القاهرة</option>
-                            <option value="الجيزة">الجيزة</option>
-                            <option value="الإسكندرية">الإسكندرية</option>
-                            <option value="القليوبية">القليوبية</option>
-                            <option value="الشرقية">الشرقية</option>
-                            <option value="الدقهلية">الدقهلية</option>
-                            <option value="البحيرة">البحيرة</option>
-                            <option value="المنوفية">المنوفية</option>
-                            <option value="الغربية">الغربية</option>
-                            <option value="كفر الشيخ">كفر الشيخ</option>
-                            <option value="دمياط">دمياط</option>
-                            <option value="بورسعيد">بورسعيد</option>
-                            <option value="الإسماعيلية">الإسماعيلية</option>
-                            <option value="السويس">السويس</option>
-                            <option value="شمال سيناء">شمال سيناء</option>
-                            <option value="جنوب سيناء">جنوب سيناء</option>
-                            <option value="بني سويف">بني سويف</option>
-                            <option value="الفيوم">الفيوم</option>
-                            <option value="المنيا">المنيا</option>
-                            <option value="أسيوط">أسيوط</option>
-                            <option value="سوهاج">سوهاج</option>
-                            <option value="قنا">قنا</option>
-                            <option value="الأقصر">الأقصر</option>
-                            <option value="أسوان">أسوان</option>
-                            <option value="البحر الأحمر">البحر الأحمر</option>
-                            <option value="الوادي الجديد">الوادي الجديد</option>
-                            <option value="مطروح">مطروح</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">مستوى الخطر <span class="text-red-400">*</span></label>
-                        <div class="grid grid-cols-3 gap-2.5">
-                            <button type="button" onclick="selectRisk('أخضر')" id="risk-أخضر" class="risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1">
-                                <span class="w-4 h-4 rounded-full bg-emerald-500"></span>
-                                <span>أخضر (عادي)</span>
-                            </button>
-                            <button type="button" onclick="selectRisk('أصفر')" id="risk-أصفر" class="risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1">
-                                <span class="w-4 h-4 rounded-full bg-amber-400"></span>
-                                <span>أصفر (متوسط)</span>
-                            </button>
-                            <button type="button" onclick="selectRisk('أحمر')" id="risk-أحمر" class="risk-btn py-3 px-2 rounded-xl border-2 border-red-500 bg-red-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-red-500/50">
-                                <span class="w-4 h-4 rounded-full bg-red-500 animate-ping"></span>
-                                <span>أحمر (عاجل)</span>
-                            </button>
-                        </div>
-                        <input type="hidden" id="risk-level" value="أحمر">
-                    </div>
-                </div>
-
-                <!-- 2. Incident Type & Location -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">2. نوع الحادث والموقع</h2>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">نوع الحادث / الأزمة</label>
-                        <div class="flex flex-wrap gap-2">
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="حادث طريق" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🚗 حادث طريق</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="حريق/انهيار" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🔥 حريق / انهيار</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="انقطاع كهرباء" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">⚡ انقطاع كهرباء</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="سيول/طقس" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🌊 سيول / طقس</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="incident_type" value="إخلاء طبي" class="peer sr-only">
-                                <span class="inline-block px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-600 text-xs sm:text-sm font-bold text-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-500 peer-checked:text-white transition">🚑 إخلاء طبي</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="location" class="block text-sm font-bold text-slate-200 mb-1.5">الموقع الدقيق (العنوان / GPS) <span class="text-red-400">*</span></label>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="location" required placeholder="مثال: طريق القاهرة الإسكندرية الصحراوي كم 45" class="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                            <button type="button" onclick="fetchGPS()" id="gps-btn" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-blue-300 font-bold text-xs sm:text-sm rounded-xl border border-slate-600 transition flex items-center justify-center gap-1.5 whitespace-nowrap">
-                                <span>📍</span>
-                                <span>تحديد الموقع GPS تلقائياً</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. Casualties & Triage -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">3. الإحصائيات وتصنيف الحالات</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-300 mb-1">إجمالي المصابين</label>
-                            <input type="number" id="total-injured" min="0" value="0" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-center font-bold focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-red-400 mb-1">حرجة (أحمر)</label>
-                            <input type="number" id="critical-cases" min="0" value="0" class="w-full bg-slate-900 border border-red-900/60 rounded-xl px-3 py-2.5 text-red-300 text-center font-bold focus:outline-none focus:border-red-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-amber-400 mb-1">متوسطة (أصفر)</label>
-                            <input type="number" id="moderate-cases" min="0" value="0" class="w-full bg-slate-900 border border-amber-900/60 rounded-xl px-3 py-2.5 text-amber-300 text-center font-bold focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-emerald-400 mb-1">بسيطة (أخضر)</label>
-                            <input type="number" id="minor-cases" min="0" value="0" class="w-full bg-slate-900 border border-emerald-900/60 rounded-xl px-3 py-2.5 text-emerald-300 text-center font-bold focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-xs font-bold text-slate-400 mb-1">الوفيات</label>
-                            <input type="number" id="deaths" min="0" value="0" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-slate-200 text-center font-bold focus:outline-none focus:border-slate-400">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Hospital & Urgent Needs -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    <h2 class="font-bold text-sm text-blue-400 border-b border-slate-700 pb-2">4. الموقف بالمستشفيات والاحتياجات العاجلة</h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label for="hospitals" class="block text-xs font-bold text-slate-300 mb-1">المستشفيات المستقبلة</label>
-                            <input type="text" id="hospitals" placeholder="مثال: مستشفى الشيخ زايد التخصصي" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="beds" class="block text-xs font-bold text-slate-300 mb-1">الأسرة المتاحة (رعاية / حضانات)</label>
-                            <input type="text" id="beds" placeholder="مثال: 4 رعاية، 2 حضانة" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-200 mb-2">الاحتياج العاجل للدعم المركزي</label>
-                        <div class="flex flex-wrap gap-2">
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="أكياس دم" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🩸 أكياس دم</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="تخصصات طبية" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">👨‍⚕️ تخصصات طبية</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="سيارات إسعاف" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🚑 سيارات إسعاف</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="سولار/مولدات" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">⛽ سولار / مولدات</span>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="checkbox" name="urgent_needs" value="إخلاء طبي" class="peer sr-only">
-                                <span class="inline-block px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-600 text-xs font-bold text-slate-300 peer-checked:bg-red-600 peer-checked:border-red-500 peer-checked:text-white transition">🚁 إخلاء طبي</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="submit-btn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-l from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-extrabold text-base shadow-lg shadow-red-900/40 transition transform active:scale-95 flex items-center justify-center gap-2">
-                    <span>🚨</span>
-                    <span>إرسال البلاغ وتفعيل التنبيه الفوري</span>
-                </button>
-
-            </form>
-        </section>
-
-        <!-- VIEW 2: Central Room Live Dashboard -->
-        <section id="view-dashboard" class="hidden space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                <div>
-                    <h2 class="font-extrabold text-base text-white">متابعة البلاغات الحية</h2>
-                    <p class="text-xs text-slate-400">تحديث لحظي تلقائي بين كافة المحافظات والغرفة المركزية</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span id="dashboard-stats" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-900 text-blue-400 border border-slate-700"></span>
-                </div>
+          <!-- 1. البيانات الأساسية ومستوى الخطر -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-5">
+              <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">1</span>
+                البيانات الأساسية ومستوى الخطر
+              </h2>
+              <span id="lockedGovNotice" class="hidden text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">
+                🔒 مسجل دخول باسم المحافظة — يتم إسناد البلاغ تلقائياً باسمها
+              </span>
             </div>
 
-            <!-- Filter by Governorate -->
-            <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-300 whitespace-nowrap">تصفية حسب المحافظة:</span>
-                <select id="filter-gov" onchange="renderDashboard()" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-xs">
-                    <option value="ALL">جميع المحافظات (27)</option>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">المحافظة / المديرية (27 محافظة) <span class="text-red-600">*</span></label>
+                <select id="governorate" required class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold focus:border-blue-600 focus:bg-white focus:outline-none disabled:opacity-80 disabled:bg-blue-50/70 disabled:text-blue-950">
+                  <option value="">اختر المحافظة...</option>
                 </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">مستوى الخطر <span class="text-red-600">*</span></label>
+                <div class="grid grid-cols-3 gap-2.5" id="severityGroup">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="severity" value="أخضر" class="peer sr-only" />
+                    <div class="peer-checked:ring-2 peer-checked:ring-emerald-600 peer-checked:bg-emerald-50 border border-slate-200 rounded-xl p-2.5 text-center transition hover:bg-slate-50">
+                      <span class="block text-sm font-extrabold text-emerald-700">🟢 أخضر</span>
+                      <span class="block text-[11px] text-slate-500">عادي</span>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="severity" value="أصفر" class="peer sr-only" />
+                    <div class="peer-checked:ring-2 peer-checked:ring-amber-500 peer-checked:bg-amber-50 border border-slate-200 rounded-xl p-2.5 text-center transition hover:bg-slate-50">
+                      <span class="block text-sm font-extrabold text-amber-600">🟡 أصفر</span>
+                      <span class="block text-[11px] text-slate-500">متوسط</span>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="severity" value="أحمر" class="peer sr-only" checked />
+                    <div class="peer-checked:ring-2 peer-checked:ring-red-600 peer-checked:bg-red-50 border border-slate-200 rounded-xl p-2.5 text-center transition hover:bg-slate-50">
+                      <span class="block text-sm font-extrabold text-red-600">🔴 أحمر</span>
+                      <span class="block text-[11px] text-slate-500">عاجل</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. نوع الحادث والموقع -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+            <h2 class="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">2</span>
+              نوع الحادث والموقع
+            </h2>
+
+            <div class="space-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">نوع الحادث / الأزمة <span class="text-red-600">*</span></label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5" id="incidentTypeGroup">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="incidentType" value="حادث طريق" class="peer sr-only" checked />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                      🚗 حادث طريق
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="incidentType" value="حريق / انهيار" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                      🔥 حريق / انهيار
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="incidentType" value="انقطاع كهرباء" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                      ⚡ انقطاع كهرباء
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="incidentType" value="سيول / طقس" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                      🌊 سيول / طقس
+                    </div>
+                  </label>
+                  <label class="cursor-pointer col-span-2 sm:col-span-1">
+                    <input type="radio" name="incidentType" value="إخلاء طبي" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                      🚑 إخلاء طبي
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">الموقع الدقيق (العنوان / GPS) <span class="text-red-600">*</span></label>
+                <div class="flex flex-col sm:flex-row gap-2.5">
+                  <input type="text" id="location" required placeholder="مثال: الطريق الدائري - نزلة المريوطية - أمام..."
+                    class="flex-1 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-blue-600 focus:bg-white focus:outline-none" />
+                  <button type="button" onclick="detectGPS()" id="gpsBtn"
+                    class="bg-slate-800 hover:bg-slate-900 text-white text-xs md:text-sm font-bold px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 shrink-0 cursor-pointer">
+                    <span>📍</span>
+                    <span>تحديد الموقع GPS تلقائياً</span>
+                  </button>
+                </div>
+                <p id="gpsStatus" class="text-xs text-slate-500 mt-1.5"></p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">ملخص تفصيلي للواقعة والإجراءات الأولية</label>
+                <textarea id="details" rows="2" placeholder="اكتب وصفاً مختصراً للوضع الراهن وأي تفاصيل إضافية..."
+                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-600 focus:bg-white focus:outline-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. الإحصائيات وتصنيف الحالات (اختيار مصابين أو مرضى) -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
+              <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">3</span>
+                الإحصائيات وتصنيف الحالات
+              </h2>
+
+              <!-- مفتاح الاختيار بين المصابين أو المرضى -->
+              <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200" id="caseCategoryGroup">
+                <label class="cursor-pointer">
+                  <input type="radio" name="caseCategory" value="مصابين" class="peer sr-only" checked onchange="updateCaseCategoryLabels()" />
+                  <span class="block px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-extrabold text-slate-600 peer-checked:bg-red-600 peer-checked:text-white transition">
+                    🤕 مصابين
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="caseCategory" value="مرضى" class="peer sr-only" onchange="updateCaseCategoryLabels()" />
+                  <span class="block px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-extrabold text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white transition">
+                    🏥 مرضى
+                  </span>
+                </label>
+              </div>
             </div>
 
-            <!-- Reports List Container -->
-            <div id="reports-list" class="space-y-4"></div>
-        </section>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                <label id="totalCasesLabel" class="block text-xs font-bold text-slate-700 mb-1.5">إجمالي المصابين</label>
+                <input type="number" id="totalInjuries" min="0" value="0" oninput="syncTotalInjuries()"
+                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base font-extrabold text-slate-900 focus:border-blue-600 focus:outline-none" />
+              </div>
 
+              <div class="bg-red-50/70 border border-red-200 rounded-xl p-3.5">
+                <label class="block text-xs font-bold text-red-700 mb-1.5">حرجة (أحمر)</label>
+                <input type="number" id="criticalCases" min="0" value="0" oninput="recalcInjuriesFromBreakdown()"
+                  class="w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-base font-extrabold text-red-700 focus:border-red-600 focus:outline-none" />
+              </div>
+
+              <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5">
+                <label class="block text-xs font-bold text-amber-700 mb-1.5">متوسطة (أصفر)</label>
+                <input type="number" id="moderateCases" min="0" value="0" oninput="recalcInjuriesFromBreakdown()"
+                  class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-base font-extrabold text-amber-700 focus:border-amber-600 focus:outline-none" />
+              </div>
+
+              <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5">
+                <label class="block text-xs font-bold text-emerald-700 mb-1.5">بسيطة (أخضر)</label>
+                <input type="number" id="minorCases" min="0" value="0" oninput="recalcInjuriesFromBreakdown()"
+                  class="w-full rounded-lg border border-emerald-300 bg-white px-3 py-2 text-base font-extrabold text-emerald-700 focus:border-emerald-600 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="mt-4 max-w-xs">
+              <div class="bg-slate-900 text-white rounded-xl p-3.5">
+                <label class="block text-xs font-bold text-slate-300 mb-1.5">الوفيات</label>
+                <input type="number" id="deaths" min="0" value="0"
+                  class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-base font-extrabold text-white focus:border-red-500 focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. الموقف بالمستشفيات والاحتياجات العاجلة -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
+              <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">4</span>
+                الموقف بالمستشفيات والاحتياجات العاجلة
+              </h2>
+
+              <div class="flex flex-wrap items-center gap-2 text-xs font-extrabold">
+                <span class="bg-rose-50 text-rose-800 border border-rose-200 px-2.5 py-1 rounded-full">
+                  🚨 طوارئ: <span id="sumEmergencyBedsDisplay">0</span>
+                </span>
+                <span class="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2.5 py-1 rounded-full">
+                  🫀 رعاية: <span id="sumIcuBedsDisplay">0</span>
+                </span>
+                <span class="bg-cyan-50 text-cyan-800 border border-cyan-200 px-2.5 py-1 rounded-full">
+                  👶 حضانة: <span id="sumIncubatorBedsDisplay">0</span>
+                </span>
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full">
+                  الإجمالي: <span id="totalAvailableBedsDisplay">0</span> سرير
+                </span>
+              </div>
+            </div>
+
+            <div class="space-y-3 mb-5">
+              <div class="flex items-center justify-between">
+                <label class="block text-sm font-bold text-slate-700">المستشفيات المستقبلة والأسرة المتاحة بكل مستشفى</label>
+                <button type="button" onclick="addHospitalRow()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-extrabold px-3.5 py-2 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                  <span>➕</span>
+                  <span>إضافة مستشفى آخر</span>
+                </button>
+              </div>
+
+              <div id="hospitalsListContainer" class="space-y-3"></div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">الاحتياج العاجل للدعم المركزي</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5" id="needsGroup">
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="needs" value="أكياس دم" class="peer sr-only" />
+                  <div class="peer-checked:border-red-600 peer-checked:bg-red-50 peer-checked:text-red-800 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                    🩸 أكياس دم
+                  </div>
+                </label>
+
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="needs" value="تخصصات طبية" class="peer sr-only" />
+                  <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-800 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                    👨‍⚕️ تخصصات طبية
+                  </div>
+                </label>
+
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="needs" value="سيارات إسعاف" class="peer sr-only" />
+                  <div class="peer-checked:border-amber-600 peer-checked:bg-amber-50 peer-checked:text-amber-800 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                    🚑 سيارات إسعاف
+                  </div>
+                </label>
+
+                <label class="cursor-pointer">
+                  <input type="checkbox" name="needs" value="سولار / مولدات" class="peer sr-only" />
+                  <div class="peer-checked:border-slate-700 peer-checked:bg-slate-100 peer-checked:text-slate-900 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                    ⛽ سولار / مولدات
+                  </div>
+                </label>
+
+                <label class="cursor-pointer col-span-2 sm:col-span-1">
+                  <input type="checkbox" name="needs" value="إخلاء طبي" class="peer sr-only" />
+                  <div class="peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:text-purple-800 border border-slate-200 rounded-xl p-3 text-center text-xs md:text-sm font-bold transition hover:bg-slate-50">
+                    🚁 إخلاء طبي
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- زر الإرسال -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            <p id="formFeedback" class="text-sm font-bold text-emerald-700"></p>
+            <button type="submit" id="submitBtn"
+              class="w-full sm:w-auto bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-extrabold text-base px-8 py-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2.5 cursor-pointer">
+              <span>🚨</span>
+              <span>إرسال البلاغ وتفعيل التنبيه الفوري</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- متابعة البلاغات الحية أسفل النموذج -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4 mb-5">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <span>📡</span>
+                <span id="liveFeedHeading">متابعة البلاغات الحية</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5" id="liveFeedSubheading">اضغط على أي بلاغ لفتحه بكامل تفاصيله في صفحة مستقلة</p>
+            </div>
+
+            <div id="formGovFilterWrapper" class="flex items-center gap-2">
+              <label for="filterGovForm" class="text-xs font-bold text-slate-600">تصفية حسب المحافظة:</label>
+              <select id="filterGovForm" onchange="renderAll()" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs md:text-sm font-bold focus:border-blue-600 focus:outline-none">
+                <option value="ALL">جميع المحافظات (27)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="liveFeedCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- تبويب لوحة الغرفة المركزية -->
+      <section id="dashboardSection" class="hidden space-y-6">
+        <!-- بطاقات الإحصائيات العليا -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <p class="text-xs font-bold text-slate-500">إجمالي البلاغات</p>
+            <p id="statTotalReports" class="text-2xl md:text-3xl font-black text-slate-900 mt-1">0</p>
+          </div>
+          <div class="bg-red-50 rounded-2xl p-4 border border-red-200 shadow-sm">
+            <p class="text-xs font-bold text-red-700">بلاغات حرجة (أحمر)</p>
+            <p id="statRedReports" class="text-2xl md:text-3xl font-black text-red-600 mt-1">0</p>
+          </div>
+          <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 shadow-sm">
+            <p class="text-xs font-bold text-amber-700">إجمالي الحالات (مصابين / مرضى)</p>
+            <p id="statTotalInjuries" class="text-2xl md:text-3xl font-black text-amber-600 mt-1">0</p>
+          </div>
+          <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-sm text-white">
+            <p class="text-xs font-bold text-slate-300">إجمالي الوفيات</p>
+            <p id="statTotalDeaths" class="text-2xl md:text-3xl font-black text-white mt-1">0</p>
+          </div>
+          <div class="bg-blue-50 rounded-2xl p-4 border border-blue-200 shadow-sm col-span-2 lg:col-span-1">
+            <p class="text-xs font-bold text-blue-800">الأسرة المتاحة (طوارئ / رعاية / حضانة)</p>
+            <p id="statAvailableBedsBreakdown" class="text-sm md:text-base font-black text-blue-950 mt-1.5 leading-snug">0 / 0 / 0</p>
+          </div>
+        </div>
+
+        <!-- فلاتر الجدول -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <select id="filterGovDash" onchange="renderAll()" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs md:text-sm font-bold">
+              <option value="ALL">كل المحافظات</option>
+            </select>
+
+            <select id="filterSeverityDash" onchange="renderAll()" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs md:text-sm font-bold">
+              <option value="ALL">كل مستويات الخطر</option>
+              <option value="أحمر">🔴 أحمر (عاجل)</option>
+              <option value="أصفر">🟡 أصفر (متوسط)</option>
+              <option value="أخضر">🟢 أخضر (عادي)</option>
+            </select>
+
+            <select id="filterStatusDash" onchange="renderAll()" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs md:text-sm font-bold">
+              <option value="ALL">كل الحالات</option>
+              <option value="نشط">نشط</option>
+              <option value="مغلق">مغلق</option>
+            </select>
+          </div>
+
+          <button onclick="clearAllReports()" class="text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 px-3.5 py-2 rounded-xl transition cursor-pointer">
+            🗑️ مسح البلاغات المعروضة
+          </button>
+        </div>
+
+        <!-- جدول البلاغات -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto custom-scroll">
+            <table class="w-full text-right border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 text-xs font-extrabold border-b border-slate-200">
+                  <th class="py-3.5 px-4">الوقت</th>
+                  <th class="py-3.5 px-4">المحافظة</th>
+                  <th class="py-3.5 px-4">الخطر</th>
+                  <th class="py-3.5 px-4">نوع الحادث</th>
+                  <th class="py-3.5 px-4">الموقع</th>
+                  <th class="py-3.5 px-4">الحالات (مصابين/مرضى) / الوفيات</th>
+                  <th class="py-3.5 px-4">المستشفيات والأسرة (طوارئ / رعاية / حضانة)</th>
+                  <th class="py-3.5 px-4">الاحتياجات</th>
+                  <th class="py-3.5 px-4">الحالة</th>
+                  <th class="py-3.5 px-4">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTableBody" class="divide-y divide-slate-100 text-xs md:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
+  </div>
 
-    <!-- Firebase Live Config Modal -->
-    <div id="config-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-600 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 class="font-extrabold text-base text-white">⚙️ إعداد الربط اللحظي بين الأجهزة (Firebase)</h3>
-                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white font-bold">✕</button>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-                لجعل البلاغات تظهر <strong>لايف في نفس الثانية</strong> على جميع الموبايلات وأجهزة الكمبيوتر:
-                <br>1. أنشئ مشروعاً مجانياً على <strong>console.firebase.google.com</strong>
-                <br>2. فعّل <strong>Firestore Database</strong> (وضع الاختبار Test Mode).
-                <br>3. انسخ كائن <code>firebaseConfig</code> والصقه هنا:
-            </p>
-            <textarea id="firebase-config-input" rows="6" placeholder='{
-  "apiKey": "AIzaSy...",
+  <!-- نافذة إعدادات الربط اللحظي Firebase -->
+  <div id="firebaseModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <h3 class="font-extrabold text-base flex items-center gap-2">
+          <span>⚙️</span>
+          <span>إعداد الربط اللحظي بين الأجهزة (Firebase)</span>
+        </h3>
+        <button onclick="closeFirebaseModal()" class="text-slate-300 hover:text-white text-lg font-bold cursor-pointer">✕</button>
+      </div>
+      <div class="p-5 space-y-4 text-sm">
+        <p class="text-slate-600 text-xs leading-relaxed">
+          لجعل البلاغات تظهر <strong>لايف في نفس الثانية</strong> على جميع الموبايلات وأجهزة الكمبيوتر:
+          <br>1. أنشئ مشروعاً مجانياً على <strong>console.firebase.google.com</strong>
+          <br>2. فعّل <strong>Firestore Database</strong> (وضع الاختبار Test Mode).
+          <br>3. انسخ كائن <code class="bg-slate-100 px-1.5 py-0.5 rounded">firebaseConfig</code> والصقه هنا:
+        </p>
+        <textarea id="firebaseConfigInput" rows="7" dir="ltr" placeholder='{
+  "apiKey": "...",
   "authDomain": "...",
   "projectId": "...",
   "storageBucket": "...",
   "messagingSenderId": "...",
   "appId": "..."
-}' class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-xs font-mono text-emerald-300 text-left" dir="ltr"></textarea>
-            <div class="flex gap-2 justify-end">
-                <button onclick="clearFirebaseConfig()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-bold rounded-xl text-slate-300">إلغاء الربط</button>
-                <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-bold rounded-xl text-white">حفظ وتفعيل الربط اللايف</button>
-            </div>
+}' class="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 font-mono text-xs focus:border-blue-600 focus:bg-white focus:outline-none"></textarea>
+        <p id="firebaseError" class="hidden text-xs font-bold text-red-600"></p>
+        <div class="flex items-center justify-between gap-2 pt-2">
+          <button type="button" onclick="disconnectFirebase()" class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold cursor-pointer">
+            إلغاء الربط
+          </button>
+          <button type="button" onclick="saveFirebaseConfig()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold cursor-pointer">
+            حفظ وتفعيل الربط اللايف
+          </button>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Firebase SDKs (Compat for single-file instant execution) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    <script>
-        let isMuted = false;
-        let audioCtx = null;
-        let db = null;
-        let isLiveMode = false;
-        let knownReportIds = new Set();
-        let isInitialLoad = true;
+    const GOVERNORATES = [
+      "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية",
+      "البحيرة", "المنوفية", "الغربية", "كفر الشيخ", "دمياط", "بورسعيد",
+      "الإسماعيلية", "السويس", "شمال سيناء", "جنوب سيناء", "بني سويف",
+      "الفيوم", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان",
+      "البحر الأحمر", "الوادي الجديد", "مطروح"
+    ];
 
-        const ALL_GOVERNORATES = [
-            "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية",
-            "البحيرة", "المنوفية", "الغربية", "كفر الشيخ", "دمياط", "بورسعيد",
-            "الإسماعيلية", "السويس", "شمال سيناء", "جنوب سيناء", "بني سويف",
-            "الفيوم", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان",
-            "البحر الأحمر", "الوادي الجديد", "مطروح"
-        ];
+    const STORAGE_KEY = "mohp_emergency_reports_v1";
+    const FB_CONFIG_KEY = "mohp_firebase_config_v1";
+    const SESSION_KEY = "mohp_active_session_v1";
+    const CENTRAL_ROOM = "الغرفة المركزية";
+    const CENTRAL_PIN = "0000";
+    const DEFAULT_GOV_PIN = "1111";
 
-        let reports = [
-            {
-                id: 'REP-1042',
-                governorate: 'الجيزة',
-                risk: 'أحمر',
-                types: ['حادث طريق'],
-                location: 'طريق القاهرة الإسكندرية الصحراوي - كم 45 (30.0891, 30.9512)',
-                totalInjured: 14,
-                critical: 4,
-                moderate: 6,
-                minor: 4,
-                deaths: 1,
-                hospitals: 'مستشفى الشيخ زايد التخصصي، مستشفى الهرم',
-                beds: '2 رعاية مركزة، 0 حضانات',
-                needs: ['أكياس دم', 'سيارات إسعاف'],
-                timestampText: 'نموذج تجريبي',
-                createdAt: Date.now() - 600000,
-                status: 'نشط'
-            }
-        ];
+    const urlParams = new URLSearchParams(window.location.search);
+    const standaloneReportId = urlParams.get("reportId");
 
-        window.onload = function() {
-            // Populate filter dropdown
-            const filterSelect = document.getElementById('filter-gov');
-            ALL_GOVERNORATES.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g;
-                opt.textContent = g;
-                filterSelect.appendChild(opt);
-            });
+    let reports = [];
+    let currentUser = null;
+    let soundEnabled = true;
+    let firestoreDb = null;
+    let unsubscribeSnapshot = null;
+    let knownReportIds = new Set();
+    let isInitialLoad = true;
+    let hospitalRowCounter = 0;
 
-            // Check saved Firebase config
-            const savedConfig = localStorage.getItem('emergency_firebase_config');
-            if (savedConfig) {
-                try {
-                    initFirebase(JSON.parse(savedConfig));
-                } catch (e) {
-                    console.error("Invalid saved config", e);
-                }
-            }
-            renderDashboard();
+    // =========================================================
+    // تحديث المسمى بين المصابين أو المرضى
+    // =========================================================
+    window.updateCaseCategoryLabels = function() {
+      const selectedCat = document.querySelector('input[name="caseCategory"]:checked')?.value || "مصابين";
+      const labelEl = document.getElementById("totalCasesLabel");
+      if (labelEl) {
+        labelEl.textContent = selectedCat === "مرضى" ? "إجمالي المرضى" : "إجمالي المصابين";
+      }
+    };
+
+    function getCaseCategory(report) {
+      return report.caseCategory === "مرضى" ? "مرضى" : "مصابين";
+    }
+
+    // =========================================================
+    // إدارة صفوف المستشفيات المستقبلة المتعددة
+    // =========================================================
+    window.addHospitalRow = function(initialData = { name: "", emergencyBeds: 0, icuBeds: 0, incubatorBeds: 0 }) {
+      const container = document.getElementById("hospitalsListContainer");
+      if (!container) return;
+      hospitalRowCounter += 1;
+      const rowId = `hosp_row_${hospitalRowCounter}`;
+      const rowIndex = container.children.length + 1;
+
+      const rowEl = document.createElement("div");
+      rowEl.id = rowId;
+      rowEl.className = "hospital-entry bg-slate-50 border border-slate-200 rounded-2xl p-4 transition hover:border-blue-300";
+      rowEl.innerHTML = `
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <span class="hospital-row-badge text-xs font-extrabold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-full">
+            مستشفى رقم #${rowIndex}
+          </span>
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-bold text-slate-500">
+              إجمالي أسرة المستشفى: <strong class="row-total-beds text-slate-900">0</strong>
+            </span>
+            <button type="button" onclick="removeHospitalRow('${rowId}')"
+              class="remove-hosp-btn text-xs font-bold text-red-600 hover:bg-red-100 px-2.5 py-1 rounded-lg transition cursor-pointer ${rowIndex === 1 ? "hidden" : ""}">
+              ✕ حذف
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+          <div class="lg:col-span-5">
+            <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستشفى المستقبل</label>
+            <input type="text" placeholder="مثال: مستشفى الهرم التخصصي..."
+              value="${escapeHtml(initialData.name || "")}"
+              class="hosp-name-input w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold focus:border-blue-600 focus:outline-none" />
+          </div>
+
+          <div class="lg:col-span-7 grid grid-cols-3 gap-2.5">
+            <div class="bg-rose-50/80 border border-rose-200 rounded-xl p-2.5">
+              <label class="block text-[11px] font-extrabold text-rose-800 mb-1">🚨 أسرة طوارئ</label>
+              <input type="number" min="0" value="${Number(initialData.emergencyBeds || 0)}" oninput="updateTotalBedsPreview()"
+                class="hosp-emergency-input w-full rounded-lg border border-rose-300 bg-white px-2.5 py-1.5 text-sm font-extrabold text-slate-900 focus:border-rose-600 focus:outline-none" />
+            </div>
+
+            <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-2.5">
+              <label class="block text-[11px] font-extrabold text-indigo-800 mb-1">🫀 أسرة رعاية</label>
+              <input type="number" min="0" value="${Number(initialData.icuBeds || 0)}" oninput="updateTotalBedsPreview()"
+                class="hosp-icu-input w-full rounded-lg border border-indigo-300 bg-white px-2.5 py-1.5 text-sm font-extrabold text-slate-900 focus:border-indigo-600 focus:outline-none" />
+            </div>
+
+            <div class="bg-cyan-50/80 border border-cyan-200 rounded-xl p-2.5">
+              <label class="block text-[11px] font-extrabold text-cyan-800 mb-1">👶 أسرة حضانة</label>
+              <input type="number" min="0" value="${Number(initialData.incubatorBeds || 0)}" oninput="updateTotalBedsPreview()"
+                class="hosp-incubator-input w-full rounded-lg border border-cyan-300 bg-white px-2.5 py-1.5 text-sm font-extrabold text-slate-900 focus:border-cyan-600 focus:outline-none" />
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(rowEl);
+      refreshHospitalRowBadges();
+      updateTotalBedsPreview();
+    };
+
+    window.removeHospitalRow = function(rowId) {
+      const container = document.getElementById("hospitalsListContainer");
+      if (!container || container.children.length <= 1) return;
+      const el = document.getElementById(rowId);
+      if (el) el.remove();
+      refreshHospitalRowBadges();
+      updateTotalBedsPreview();
+    };
+
+    function refreshHospitalRowBadges() {
+      const rows = document.querySelectorAll("#hospitalsListContainer .hospital-entry");
+      rows.forEach((row, idx) => {
+        const badge = row.querySelector(".hospital-row-badge");
+        const removeBtn = row.querySelector(".remove-hosp-btn");
+        if (badge) badge.textContent = `مستشفى رقم #${idx + 1}`;
+        if (removeBtn) {
+          if (rows.length > 1) {
+            removeBtn.classList.remove("hidden");
+          } else {
+            removeBtn.classList.add("hidden");
+          }
+        }
+      });
+    }
+
+    function resetHospitalRows() {
+      const container = document.getElementById("hospitalsListContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      hospitalRowCounter = 0;
+      addHospitalRow();
+    }
+
+    function collectHospitalsFromForm() {
+      const rows = document.querySelectorAll("#hospitalsListContainer .hospital-entry");
+      const list = [];
+      rows.forEach(row => {
+        const name = (row.querySelector(".hosp-name-input")?.value || "").trim();
+        const emergencyBeds = parseInt(row.querySelector(".hosp-emergency-input")?.value || 0, 10) || 0;
+        const icuBeds = parseInt(row.querySelector(".hosp-icu-input")?.value || 0, 10) || 0;
+        const incubatorBeds = parseInt(row.querySelector(".hosp-incubator-input")?.value || 0, 10) || 0;
+        if (name || emergencyBeds > 0 || icuBeds > 0 || incubatorBeds > 0) {
+          list.push({
+            name: name || "مستشفى غير مسمى",
+            emergencyBeds,
+            icuBeds,
+            incubatorBeds,
+            totalBeds: emergencyBeds + icuBeds + incubatorBeds
+          });
+        }
+      });
+      return list;
+    }
+
+    window.updateTotalBedsPreview = function() {
+      const rows = document.querySelectorAll("#hospitalsListContainer .hospital-entry");
+      let totalEmergency = 0;
+      let totalIcu = 0;
+      let totalIncubator = 0;
+
+      rows.forEach(row => {
+        const e = parseInt(row.querySelector(".hosp-emergency-input")?.value || 0, 10) || 0;
+        const i = parseInt(row.querySelector(".hosp-icu-input")?.value || 0, 10) || 0;
+        const inc = parseInt(row.querySelector(".hosp-incubator-input")?.value || 0, 10) || 0;
+        const rowSum = e + i + inc;
+        const rowTotalEl = row.querySelector(".row-total-beds");
+        if (rowTotalEl) rowTotalEl.textContent = rowSum.toLocaleString("ar-EG");
+
+        totalEmergency += e;
+        totalIcu += i;
+        totalIncubator += inc;
+      });
+
+      const grandTotal = totalEmergency + totalIcu + totalIncubator;
+      document.getElementById("sumEmergencyBedsDisplay").textContent = totalEmergency.toLocaleString("ar-EG");
+      document.getElementById("sumIcuBedsDisplay").textContent = totalIcu.toLocaleString("ar-EG");
+      document.getElementById("sumIncubatorBedsDisplay").textContent = totalIncubator.toLocaleString("ar-EG");
+      document.getElementById("totalAvailableBedsDisplay").textContent = grandTotal.toLocaleString("ar-EG");
+    };
+
+    function getBedsInfo(report) {
+      if (Array.isArray(report.hospitalsList) && report.hospitalsList.length > 0) {
+        const totals = report.hospitalsList.reduce(
+          (acc, h) => {
+            acc.emergency += Number(h.emergencyBeds || 0);
+            acc.icu += Number(h.icuBeds || 0);
+            acc.incubator += Number(h.incubatorBeds || 0);
+            return acc;
+          },
+          { emergency: 0, icu: 0, incubator: 0 }
+        );
+        return {
+          emergency: totals.emergency,
+          icu: totals.icu,
+          incubator: totals.incubator,
+          total: totals.emergency + totals.icu + totals.incubator,
+          hospitalsList: report.hospitalsList
         };
+      }
 
-        function initFirebase(config) {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(config);
+      const emergency = Number(report.emergencyBeds ?? 0);
+      const icu = Number(report.icuBeds ?? 0);
+      const incubator = Number(report.incubatorBeds ?? 0);
+      const hasStructured =
+        report.emergencyBeds !== undefined ||
+        report.icuBeds !== undefined ||
+        report.incubatorBeds !== undefined;
+
+      if (hasStructured) {
+        return {
+          emergency,
+          icu,
+          incubator,
+          total: emergency + icu + incubator,
+          hospitalsList: report.hospitals
+            ? [{ name: report.hospitals, emergencyBeds: emergency, icuBeds: icu, incubatorBeds: incubator, totalBeds: emergency + icu + incubator }]
+            : []
+        };
+      }
+
+      const legacy = Number(report.availableBeds || 0);
+      return {
+        emergency: 0,
+        icu: 0,
+        incubator: 0,
+        total: legacy,
+        hospitalsList: report.hospitals
+          ? [{ name: report.hospitals, emergencyBeds: 0, icuBeds: 0, incubatorBeds: 0, totalBeds: legacy }]
+          : []
+      };
+    }
+
+    // =========================================================
+    // صفحة التفاصيل المستقلة (?reportId=...)
+    // =========================================================
+    function buildReportPageUrl(reportId) {
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "";
+      url.searchParams.set("reportId", reportId);
+      return url.toString();
+    }
+
+    window.openReportInNewPage = function(id) {
+      const targetUrl = buildReportPageUrl(id);
+      window.open(targetUrl, "_blank", "noopener");
+    };
+
+    window.closeStandaloneTab = function() {
+      window.close();
+      setTimeout(() => {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.search = "";
+        window.location.href = cleanUrl.toString();
+      }, 150);
+    };
+
+    window.toggleStandaloneStatus = async function() {
+      if (!standaloneReportId) return;
+      await toggleReportStatus(standaloneReportId);
+      if (!firestoreDb) {
+        renderStandaloneReport();
+      }
+    };
+
+    function renderStandaloneReport() {
+      const container = document.getElementById("standaloneReportContainer");
+      const statusBtn = document.getElementById("standaloneToggleStatusBtn");
+      const topStatus = document.getElementById("standaloneTopStatus");
+      const r = reports.find(item => item.id === standaloneReportId);
+
+      if (!r) {
+        container.innerHTML = `
+          <div class="p-10 text-center space-y-3">
+            <p class="text-2xl">⚠️</p>
+            <h2 class="text-lg font-extrabold text-slate-900">لم يتم العثور على بيانات البلاغ</h2>
+            <p class="text-xs text-slate-500">قد يكون البلاغ تم حذفه أو أن الربط اللحظي (Firebase) غير مفعّل على هذا المتصفح.</p>
+          </div>
+        `;
+        statusBtn.classList.add("hidden");
+        return;
+      }
+
+      const categoryLabel = getCaseCategory(r);
+      document.title = `بلاغ ${r.governorate} - ${r.incidentType} | وزارة الصحة`;
+      statusBtn.classList.remove("hidden");
+      statusBtn.textContent = r.status === "نشط" ? "✓ إغلاق البلاغ" : "↻ إعادة تنشيط البلاغ";
+      topStatus.textContent = `رقم البلاغ: ${r.id} | الحالة الحالية: ${r.status}`;
+
+      const beds = getBedsInfo(r);
+      const sevBannerClass =
+        r.severity === "أحمر"
+          ? "bg-red-600 text-white"
+          : r.severity === "أصفر"
+          ? "bg-amber-500 text-slate-950"
+          : "bg-emerald-600 text-white";
+
+      const hospitalsTableHtml = beds.hospitalsList.length
+        ? `
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-right border-collapse text-xs md:text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 font-extrabold border-b border-slate-200">
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">المستشفى المستقبل</th>
+                  <th class="py-2.5 px-3 text-center text-rose-800">🚨 أسرة طوارئ</th>
+                  <th class="py-2.5 px-3 text-center text-indigo-800">🫀 أسرة رعاية</th>
+                  <th class="py-2.5 px-3 text-center text-cyan-800">👶 أسرة حضانة</th>
+                  <th class="py-2.5 px-3 text-center">الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${beds.hospitalsList.map((h, idx) => {
+                  const rowSum = Number(h.emergencyBeds || 0) + Number(h.icuBeds || 0) + Number(h.incubatorBeds || 0);
+                  return `
+                    <tr>
+                      <td class="py-2.5 px-3 font-bold text-slate-500">${idx + 1}</td>
+                      <td class="py-2.5 px-3 font-extrabold text-slate-900">${escapeHtml(h.name)}</td>
+                      <td class="py-2.5 px-3 text-center font-extrabold text-rose-700 bg-rose-50/40">${Number(h.emergencyBeds || 0)}</td>
+                      <td class="py-2.5 px-3 text-center font-extrabold text-indigo-700 bg-indigo-50/40">${Number(h.icuBeds || 0)}</td>
+                      <td class="py-2.5 px-3 text-center font-extrabold text-cyan-700 bg-cyan-50/40">${Number(h.incubatorBeds || 0)}</td>
+                      <td class="py-2.5 px-3 text-center font-black text-slate-900">${rowSum}</td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+              <tfoot>
+                <tr class="bg-blue-50/80 font-black text-slate-900 border-t-2 border-blue-200">
+                  <td colspan="2" class="py-2.5 px-3">الإجمالي الكلي لكافة المستشفيات (${beds.hospitalsList.length})</td>
+                  <td class="py-2.5 px-3 text-center text-rose-800">${beds.emergency}</td>
+                  <td class="py-2.5 px-3 text-center text-indigo-800">${beds.icu}</td>
+                  <td class="py-2.5 px-3 text-center text-cyan-800">${beds.incubator}</td>
+                  <td class="py-2.5 px-3 text-center text-blue-900">${beds.total}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        `
+        : `<p class="text-xs font-bold text-slate-500 bg-slate-50 p-3.5 rounded-xl border border-slate-200">لم يتم تحديد مستشفيات مستقبلة في هذا البلاغ.</p>`;
+
+      container.innerHTML = `
+        <div class="bg-gradient-to-l from-slate-900 via-blue-950 to-slate-900 text-white p-6 md:p-8 border-b-4 border-red-600">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p class="text-xs text-blue-200 font-bold">جمهورية مصر العربية — وزارة الصحة والسكان</p>
+              <h1 class="text-xl md:text-2xl font-black mt-1">الإدارة المركزية للطوارئ والرعاية الحرجة</h1>
+              <p class="text-xs md:text-sm text-slate-300 mt-0.5">مركز التحكم الرئيسي — بطاقة بلاغ طوارئ وأزمات</p>
+            </div>
+            <div class="text-right md:text-left space-y-1.5">
+              <span class="inline-block px-3.5 py-1 rounded-full text-xs font-black ${sevBannerClass}">
+                درجة الخطورة: ${escapeHtml(r.severity)}
+              </span>
+              <p class="text-xs text-slate-300 font-mono">ID: ${escapeHtml(r.id)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">المحافظة / المديرية</span>
+              <strong class="text-base font-black text-slate-900 mt-0.5 block">${escapeHtml(r.governorate)}</strong>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">الجهة المُرسِلة للبلاغ</span>
+              <strong class="text-base font-extrabold text-blue-900 mt-0.5 block">${escapeHtml(r.submittedBy || r.governorate)}</strong>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">نوع الحادث / الأزمة</span>
+              <strong class="text-base font-extrabold text-slate-900 mt-0.5 block">${escapeHtml(r.incidentType)}</strong>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">تاريخ وتوقيت الإبلاغ</span>
+              <strong class="text-sm font-extrabold text-slate-900 mt-0.5 block">${formatDateTime(r.createdAt)}</strong>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">حالة البلاغ</span>
+              <strong class="text-sm font-black mt-0.5 inline-block px-2.5 py-0.5 rounded-full ${r.status === "نشط" ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}">
+                ${escapeHtml(r.status)}
+              </strong>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs text-slate-500 font-bold block">فئة الحالات المسجلة</span>
+              <strong class="text-base font-black text-blue-900 mt-0.5 block">${categoryLabel === "مرضى" ? "🏥 مرضى" : "🤕 مصابين"}</strong>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-blue-50/60 border border-blue-200 rounded-xl p-4">
+              <span class="text-xs font-extrabold text-blue-800 block mb-1">📍 الموقع الدقيق للحادث / الأزمة</span>
+              <p class="text-sm md:text-base font-bold text-slate-900">${escapeHtml(r.location)}</p>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <span class="text-xs font-extrabold text-slate-700 block mb-1">📝 ملخص الواقعة والإجراءات الأولية</span>
+              <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">${escapeHtml(r.details || "لا توجد ملاحظات تفصيلية إضافية مسجلة.")}</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-black text-slate-800 mb-3">إحصائيات ال${categoryLabel} والوفيات</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+              <div class="bg-slate-100 border border-slate-200 p-3.5 rounded-xl">
+                <span class="text-xs text-slate-600 font-bold block">إجمالي ال${categoryLabel}</span>
+                <strong class="text-2xl font-black text-slate-900">${r.totalInjuries}</strong>
+              </div>
+              <div class="bg-red-50 border border-red-200 p-3.5 rounded-xl">
+                <span class="text-xs text-red-700 font-bold block">حالات حرجة</span>
+                <strong class="text-2xl font-black text-red-700">${r.criticalCases}</strong>
+              </div>
+              <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl">
+                <span class="text-xs text-amber-700 font-bold block">حالات متوسطة</span>
+                <strong class="text-2xl font-black text-amber-700">${r.moderateCases}</strong>
+              </div>
+              <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl">
+                <span class="text-xs text-emerald-700 font-bold block">حالات بسيطة</span>
+                <strong class="text-2xl font-black text-emerald-700">${r.minorCases}</strong>
+              </div>
+              <div class="bg-slate-900 text-white p-3.5 rounded-xl col-span-2 sm:col-span-1">
+                <span class="text-xs text-slate-300 font-bold block">الوفيات</span>
+                <strong class="text-2xl font-black">${r.deaths}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-black text-slate-800">المستشفيات المستقبلة وتوزيع الأسرة المتاحة</h3>
+              <span class="text-xs font-extrabold text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                الإجمالي الكلي: ${beds.total} سرير
+              </span>
+            </div>
+            ${hospitalsTableHtml}
+          </div>
+
+          <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-4">
+            <span class="text-xs font-extrabold text-amber-900 block mb-2">الاحتياج العاجل للدعم المركزي</span>
+            ${
+              r.needs && r.needs.length
+                ? `<div class="flex flex-wrap gap-2">${r.needs
+                    .map(
+                      n =>
+                        `<span class="bg-white border border-amber-300 text-amber-950 text-xs font-extrabold px-3 py-1.5 rounded-lg shadow-2xs">✓ ${escapeHtml(n)}</span>`
+                    )
+                    .join("")}</div>`
+                : `<p class="text-xs font-bold text-slate-500">لم يتم طلب احتياجات دعم مركزي عاجلة في هذا البلاغ.</p>`
             }
-            db = firebase.firestore();
-            isLiveMode = true;
+          </div>
 
-            const statusBadge = document.getElementById('connection-status');
-            statusBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold";
-            statusBadge.textContent = "🟢 متصل لايف (مزامنة فورية)";
+          <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>صادر عن منظومة الطوارئ المركزية - وزارة الصحة والسكان</span>
+            <span>توقيت الطباعة / العرض: ${formatDateTime(new Date().toISOString())}</span>
+          </div>
+        </div>
+      `;
+    }
 
-            // Real-time listener on Firestore collection
-            db.collection("emergency_reports")
-              .orderBy("createdAt", "desc")
-              .limit(100)
-              .onSnapshot((snapshot) => {
-                  const liveReports = [];
-                  snapshot.forEach((doc) => {
-                      const data = doc.data();
-                      data.docId = doc.id;
-                      liveReports.push(data);
+    function populateGovernorates() {
+      const loginSelect = document.getElementById("loginEntity");
+      const formSelect = document.getElementById("governorate");
+      const filterForm = document.getElementById("filterGovForm");
+      const filterDash = document.getElementById("filterGovDash");
 
-                      // Trigger alert for NEW incoming reports on other devices
-                      if (!isInitialLoad && !knownReportIds.has(doc.id) && data.status === 'نشط') {
-                          if (data.risk === 'أحمر' || data.risk === 'أصفر') {
-                              playAlertSound(data.risk);
-                          }
-                          showAlertBanner(data.risk, data.governorate);
-                      }
-                      knownReportIds.add(doc.id);
-                  });
+      GOVERNORATES.forEach(gov => {
+        loginSelect.add(new Option(gov, gov));
+        formSelect.add(new Option(gov, gov));
+        filterForm.add(new Option(gov, gov));
+        filterDash.add(new Option(gov, gov));
+      });
+    }
 
-                  reports = liveReports;
-                  isInitialLoad = false;
-                  renderDashboard();
-              }, (error) => {
-                  console.error("Firestore Error:", error);
-                  alert("تعذر الاتصال بقاعدة البيانات. تأكد من إعدادات Firestore Rules.");
-              });
+    window.quickFillLogin = function(entity, pin) {
+      document.getElementById("loginEntity").value = entity;
+      document.getElementById("loginPin").value = pin;
+      document.getElementById("loginError").classList.add("hidden");
+    };
+
+    window.handleLogin = function(e) {
+      e.preventDefault();
+      const entity = document.getElementById("loginEntity").value;
+      const pin = document.getElementById("loginPin").value.trim();
+      const errorEl = document.getElementById("loginError");
+
+      if (!entity) {
+        errorEl.textContent = "يرجى اختيار المحافظة أو الغرفة المركزية.";
+        errorEl.classList.remove("hidden");
+        return;
+      }
+
+      const expectedPin = entity === CENTRAL_ROOM ? CENTRAL_PIN : DEFAULT_GOV_PIN;
+      if (pin !== expectedPin) {
+        errorEl.textContent = `رمز الدخول غير صحيح للجهة المختارة (${entity}).`;
+        errorEl.classList.remove("hidden");
+        return;
+      }
+
+      errorEl.classList.add("hidden");
+      currentUser = {
+        name: entity,
+        role: entity === CENTRAL_ROOM ? "central" : "governorate",
+        loggedInAt: new Date().toISOString()
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+      applySessionUI();
+      renderAll();
+    };
+
+    window.logoutUser = function() {
+      localStorage.removeItem(SESSION_KEY);
+      currentUser = null;
+      document.getElementById("loginPin").value = "";
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("currentUserBadge").classList.add("hidden");
+    };
+
+    function applySessionUI() {
+      if (!currentUser) {
+        document.getElementById("loginScreen").classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("currentUserBadge").classList.remove("hidden");
+      document.getElementById("currentUserName").textContent = currentUser.name;
+
+      const govSelect = document.getElementById("governorate");
+      const lockedNotice = document.getElementById("lockedGovNotice");
+      const formGovFilterWrapper = document.getElementById("formGovFilterWrapper");
+      const filterGovDash = document.getElementById("filterGovDash");
+      const liveFeedHeading = document.getElementById("liveFeedHeading");
+      const liveFeedSubheading = document.getElementById("liveFeedSubheading");
+      const dashboardTabTitle = document.getElementById("dashboardTabTitle");
+
+      if (currentUser.role === "governorate") {
+        govSelect.value = currentUser.name;
+        govSelect.disabled = true;
+        lockedNotice.classList.remove("hidden");
+        formGovFilterWrapper.classList.add("hidden");
+        filterGovDash.value = currentUser.name;
+        filterGovDash.disabled = true;
+        liveFeedHeading.textContent = `بلاغات محافظة ${currentUser.name} الحية`;
+        liveFeedSubheading.textContent = `اضغط على أي بلاغ لفتحه بكامل تفاصيله في صفحة مستقلة`;
+        dashboardTabTitle.textContent = `لوحة بلاغات ${currentUser.name}`;
+      } else {
+        govSelect.disabled = false;
+        govSelect.value = "";
+        lockedNotice.classList.add("hidden");
+        formGovFilterWrapper.classList.remove("hidden");
+        filterGovDash.disabled = false;
+        filterGovDash.value = "ALL";
+        liveFeedHeading.textContent = "متابعة البلاغات الحية";
+        liveFeedSubheading.textContent = "اضغط على أي بلاغ لفتحه بكامل تفاصيله في صفحة مستقلة";
+        dashboardTabTitle.textContent = "لوحة الغرفة المركزية";
+      }
+    }
+
+    function restoreSession() {
+      try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        if (saved) {
+          currentUser = JSON.parse(saved);
+        }
+      } catch (_) {
+        currentUser = null;
+      }
+      applySessionUI();
+    }
+
+    function playAlertSound(isRed = true) {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = isRed ? "sawtooth" : "triangle";
+        osc.frequency.setValueAtTime(isRed ? 880 : 620, now);
+        osc.frequency.setValueAtTime(isRed ? 660 : 480, now + 0.18);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } catch (_) {}
+    }
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      document.getElementById("soundIcon").textContent = soundEnabled ? "🔊" : "🔇";
+      document.getElementById("soundLabel").textContent = soundEnabled ? "الصوت مفعل" : "الصوت مكتوم";
+    };
+
+    window.switchTab = function(tab) {
+      const formSection = document.getElementById("formSection");
+      const dashSection = document.getElementById("dashboardSection");
+      const tabFormBtn = document.getElementById("tabFormBtn");
+      const tabDashBtn = document.getElementById("tabDashboardBtn");
+
+      if (tab === "form") {
+        formSection.classList.remove("hidden");
+        dashSection.classList.add("hidden");
+        tabFormBtn.className = "bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer";
+        tabDashBtn.className = "bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer";
+      } else {
+        formSection.classList.add("hidden");
+        dashSection.classList.remove("hidden");
+        tabDashBtn.className = "bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer";
+        tabFormBtn.className = "bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer";
+      }
+    };
+
+    window.detectGPS = function() {
+      const statusEl = document.getElementById("gpsStatus");
+      const locInput = document.getElementById("location");
+      if (!navigator.geolocation) {
+        statusEl.textContent = "المتصفح لا يدعم تحديد الموقع الجغرافي تلقائياً.";
+        return;
+      }
+      statusEl.textContent = "جارٍ تحديد الإحداثيات...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(5);
+          const lng = pos.coords.longitude.toFixed(5);
+          const coordsText = `GPS: ${lat}, ${lng}`;
+          locInput.value = locInput.value ? `${locInput.value} (${coordsText})` : coordsText;
+          statusEl.textContent = `تم تحديد الموقع بنجاح (${coordsText})`;
+          statusEl.className = "text-xs text-emerald-600 font-bold mt-1.5";
+        },
+        () => {
+          statusEl.textContent = "تعذر الوصول إلى GPS، يمكنك إدخال العنوان يدوياً.";
+          statusEl.className = "text-xs text-amber-600 font-semibold mt-1.5";
+        }
+      );
+    };
+
+    window.recalcInjuriesFromBreakdown = function() {
+      const c = parseInt(document.getElementById("criticalCases").value || 0, 10);
+      const m = parseInt(document.getElementById("moderateCases").value || 0, 10);
+      const min = parseInt(document.getElementById("minorCases").value || 0, 10);
+      document.getElementById("totalInjuries").value = c + m + min;
+    };
+
+    window.syncTotalInjuries = function() {
+      const total = parseInt(document.getElementById("totalInjuries").value || 0, 10);
+      const c = parseInt(document.getElementById("criticalCases").value || 0, 10);
+      const m = parseInt(document.getElementById("moderateCases").value || 0, 10);
+      const min = parseInt(document.getElementById("minorCases").value || 0, 10);
+      if (c + m + min === 0 && total > 0) {
+        document.getElementById("criticalCases").value = total;
+      }
+    };
+
+    function triggerUrgentBanner(report) {
+      const banner = document.getElementById("urgentBanner");
+      if (!banner) return;
+      const cat = getCaseCategory(report);
+      document.getElementById("urgentBannerTitle").textContent =
+        `بلاغ عاجل (${report.severity}) — محافظة ${report.governorate}: ${report.incidentType}`;
+      document.getElementById("urgentBannerDesc").textContent =
+        `الموقع: ${report.location} | ال${cat}: ${report.totalInjuries} | الوفيات: ${report.deaths}`;
+      document.getElementById("urgentBannerOpenBtn").onclick = () => openReportInNewPage(report.id);
+      banner.classList.remove("hidden");
+      playAlertSound(report.severity === "أحمر");
+    }
+
+    window.dismissUrgentBanner = function() {
+      document.getElementById("urgentBanner").classList.add("hidden");
+    };
+
+    function loadLocalReports() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        reports = raw ? JSON.parse(raw) : [];
+      } catch (_) {
+        reports = [];
+      }
+    }
+
+    function saveLocalReports() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+    }
+
+    window.submitIncident = async function(e) {
+      e.preventDefault();
+      if (!currentUser) {
+        document.getElementById("loginScreen").classList.remove("hidden");
+        return;
+      }
+
+      const selectedGov = currentUser.role === "governorate"
+        ? currentUser.name
+        : document.getElementById("governorate").value;
+
+      const severity = document.querySelector('input[name="severity"]:checked')?.value || "أحمر";
+      const incidentType = document.querySelector('input[name="incidentType"]:checked')?.value || "حادث طريق";
+      const caseCategory = document.querySelector('input[name="caseCategory"]:checked')?.value || "مصابين";
+      const location = document.getElementById("location").value.trim();
+      const details = document.getElementById("details").value.trim();
+      const totalInjuries = parseInt(document.getElementById("totalInjuries").value || 0, 10);
+      const criticalCases = parseInt(document.getElementById("criticalCases").value || 0, 10);
+      const moderateCases = parseInt(document.getElementById("moderateCases").value || 0, 10);
+      const minorCases = parseInt(document.getElementById("minorCases").value || 0, 10);
+      const deaths = parseInt(document.getElementById("deaths").value || 0, 10);
+
+      const hospitalsList = collectHospitalsFromForm();
+      const hospitalsSummaryText = hospitalsList.map(h => h.name).join("، ");
+      const emergencyBeds = hospitalsList.reduce((sum, h) => sum + h.emergencyBeds, 0);
+      const icuBeds = hospitalsList.reduce((sum, h) => sum + h.icuBeds, 0);
+      const incubatorBeds = hospitalsList.reduce((sum, h) => sum + h.incubatorBeds, 0);
+      const availableBeds = emergencyBeds + icuBeds + incubatorBeds;
+
+      const needs = Array.from(document.querySelectorAll('input[name="needs"]:checked')).map(el => el.value);
+
+      if (!selectedGov || !location) return;
+
+      const newReport = {
+        id: "rep_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        governorate: selectedGov,
+        submittedBy: currentUser.name,
+        severity,
+        incidentType,
+        caseCategory,
+        location,
+        details,
+        totalInjuries,
+        criticalCases,
+        moderateCases,
+        minorCases,
+        deaths,
+        hospitals: hospitalsSummaryText,
+        hospitalsList,
+        emergencyBeds,
+        icuBeds,
+        incubatorBeds,
+        availableBeds,
+        needs,
+        status: "نشط",
+        createdAt: new Date().toISOString()
+      };
+
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+
+      try {
+        if (firestoreDb) {
+          await addDoc(collection(firestoreDb, "emergency_reports"), newReport);
+        } else {
+          reports.unshift(newReport);
+          saveLocalReports();
+          renderAll();
         }
 
-        function openConfigModal() {
-            const saved = localStorage.getItem('emergency_firebase_config') || '';
-            document.getElementById('firebase-config-input').value = saved;
-            document.getElementById('config-modal').classList.remove('hidden');
+        knownReportIds.add(newReport.id);
+        triggerUrgentBanner(newReport);
+
+        document.getElementById("incidentForm").reset();
+        document.querySelector('input[name="severity"][value="أحمر"]').checked = true;
+        document.querySelector('input[name="incidentType"][value="حادث طريق"]').checked = true;
+        document.querySelector('input[name="caseCategory"][value="مصابين"]').checked = true;
+        updateCaseCategoryLabels();
+        document.getElementById("totalInjuries").value = 0;
+        document.getElementById("criticalCases").value = 0;
+        document.getElementById("moderateCases").value = 0;
+        document.getElementById("minorCases").value = 0;
+        document.getElementById("deaths").value = 0;
+        resetHospitalRows();
+        document.getElementById("gpsStatus").textContent = "";
+        applySessionUI();
+
+        const fb = document.getElementById("formFeedback");
+        fb.textContent = `✅ تم إرسال البلاغ باسم (${selectedGov}) وتفعيل التنبيه بنجاح`;
+        setTimeout(() => { fb.textContent = ""; }, 4000);
+      } catch (err) {
+        alert("حدث خطأ أثناء إرسال البلاغ: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    };
+
+    window.toggleReportStatus = async function(id) {
+      const target = reports.find(r => r.id === id);
+      if (!target) return;
+      const nextStatus = target.status === "نشط" ? "مغلق" : "نشط";
+
+      if (firestoreDb && target._docId) {
+        await updateDoc(doc(firestoreDb, "emergency_reports", target._docId), { status: nextStatus });
+      } else {
+        target.status = nextStatus;
+        saveLocalReports();
+        if (standaloneReportId) {
+          renderStandaloneReport();
+        } else {
+          renderAll();
         }
+      }
+    };
 
-        function closeConfigModal() {
-            document.getElementById('config-modal').classList.add('hidden');
+    window.deleteReport = async function(id) {
+      if (!confirm("هل أنت متأكد من حذف هذا البلاغ؟")) return;
+      const target = reports.find(r => r.id === id);
+      if (!target) return;
+
+      if (firestoreDb && target._docId) {
+        await deleteDoc(doc(firestoreDb, "emergency_reports", target._docId));
+      } else {
+        reports = reports.filter(r => r.id !== id);
+        saveLocalReports();
+        renderAll();
+      }
+    };
+
+    window.clearAllReports = async function() {
+      const scopedIds = getRoleScopedReports().map(r => r.id);
+      if (!scopedIds.length) return;
+      if (!confirm("سيتم حذف البلاغات المعروضة حالياً. هل تريد المتابعة؟")) return;
+
+      if (firestoreDb) {
+        const targets = reports.filter(r => scopedIds.includes(r.id) && r._docId);
+        await Promise.all(targets.map(t => deleteDoc(doc(firestoreDb, "emergency_reports", t._docId))));
+      } else {
+        reports = reports.filter(r => !scopedIds.includes(r.id));
+        saveLocalReports();
+        renderAll();
+      }
+    };
+
+    window.openFirebaseModal = function() {
+      const saved = localStorage.getItem(FB_CONFIG_KEY) || "";
+      document.getElementById("firebaseConfigInput").value = saved;
+      document.getElementById("firebaseError").classList.add("hidden");
+      document.getElementById("firebaseModal").classList.remove("hidden");
+    };
+
+    window.closeFirebaseModal = function() {
+      document.getElementById("firebaseModal").classList.add("hidden");
+    };
+
+    window.saveFirebaseConfig = function() {
+      const raw = document.getElementById("firebaseConfigInput").value.trim();
+      const errEl = document.getElementById("firebaseError");
+      try {
+        const cleaned = raw.replace(/^const\s+firebaseConfig\s*=\s*/, "").replace(/;$/, "");
+        const parsed = JSON.parse(cleaned);
+        if (!parsed.apiKey || !parsed.projectId) {
+          throw new Error("يجب أن يحتوي الكائن على apiKey و projectId");
         }
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(parsed, null, 2));
+        errEl.classList.add("hidden");
+        closeFirebaseModal();
+        connectFirebase(parsed);
+      } catch (err) {
+        errEl.textContent = "صيغة JSON غير صحيحة: " + err.message;
+        errEl.classList.remove("hidden");
+      }
+    };
 
-        function saveFirebaseConfig() {
-            const raw = document.getElementById('firebase-config-input').value.trim();
-            try {
-                // Clean JS object syntax if pasted directly from Firebase Console
-                const jsonStr = raw.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
-                const parsed = JSON.parse(jsonStr);
-                localStorage.setItem('emergency_firebase_config', JSON.stringify(parsed));
-                location.reload();
-            } catch (e) {
-                alert("صيغة الكود غير صحيحة. تأكد من نسخ ما بين القوسين { ... } بشكل كامل.");
-            }
+    window.disconnectFirebase = function() {
+      localStorage.removeItem(FB_CONFIG_KEY);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+      firestoreDb = null;
+      setSyncBadge(false);
+      closeFirebaseModal();
+      loadLocalReports();
+      renderAll();
+    };
+
+    function setSyncBadge(isLive) {
+      const badge = document.getElementById("syncBadge");
+      if (!badge) return;
+      if (isLive) {
+        badge.className = "cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30 transition";
+        badge.textContent = "🟢 متصل لايف (Firebase)";
+      } else {
+        badge.className = "cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30 transition";
+        badge.textContent = "🟡 وضع محلي (بانتظار ربط السيرفر)";
+      }
+    }
+
+    function connectFirebase(config) {
+      try {
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+          unsubscribeSnapshot = null;
         }
+        const app = getApps().length ? getApps()[0] : initializeApp(config);
+        firestoreDb = getFirestore(app);
+        setSyncBadge(true);
+        isInitialLoad = true;
 
-        function clearFirebaseConfig() {
-            localStorage.removeItem('emergency_firebase_config');
-            location.reload();
-        }
+        const q = query(collection(firestoreDb, "emergency_reports"), orderBy("createdAt", "desc"));
+        unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+          const incoming = [];
+          snapshot.forEach((docSnap) => {
+            incoming.push({ ...docSnap.data(), _docId: docSnap.id });
+          });
+          reports = incoming;
 
-        function switchTab(tab) {
-            const viewForm = document.getElementById('view-form');
-            const viewDash = document.getElementById('view-dashboard');
-            const tabForm = document.getElementById('tab-form');
-            const tabDash = document.getElementById('tab-dashboard');
+          if (standaloneReportId) {
+            renderStandaloneReport();
+            return;
+          }
 
-            if (tab === 'form') {
-                viewForm.classList.remove('hidden');
-                viewDash.classList.add('hidden');
-                tabForm.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md';
-                tabDash.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
-            } else {
-                viewForm.classList.add('hidden');
-                viewDash.classList.remove('hidden');
-                tabDash.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-blue-600 text-white shadow-md';
-                tabForm.className = 'flex-1 py-2.5 px-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
-                renderDashboard();
-            }
-        }
-
-        function selectRisk(level) {
-            document.getElementById('risk-level').value = level;
-            document.querySelectorAll('.risk-btn').forEach(btn => {
-                btn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-slate-600 bg-slate-900 text-slate-300 font-bold text-sm transition flex flex-col items-center gap-1';
+          if (!isInitialLoad) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                const data = change.doc.data();
+                if (!knownReportIds.has(data.id)) {
+                  knownReportIds.add(data.id);
+                  triggerUrgentBanner(data);
+                }
+              }
             });
+          } else {
+            reports.forEach(r => knownReportIds.add(r.id));
+            isInitialLoad = false;
+          }
 
-            const activeBtn = document.getElementById('risk-' + level);
-            if (level === 'أخضر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-emerald-500/50';
-            } else if (level === 'أصفر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-amber-400 bg-amber-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-amber-400/50';
-            } else if (level === 'أحمر') {
-                activeBtn.className = 'risk-btn py-3 px-2 rounded-xl border-2 border-red-500 bg-red-950/60 text-white font-bold text-sm transition flex flex-col items-center gap-1 ring-2 ring-red-500/50';
-            }
-        }
+          renderAll();
+        }, (err) => {
+          console.error("Firestore error:", err);
+          setSyncBadge(false);
+        });
+      } catch (err) {
+        alert("تعذر الاتصال بـ Firebase: " + err.message);
+        setSyncBadge(false);
+      }
+    }
 
-        function fetchGPS() {
-            const btn = document.getElementById('gps-btn');
-            const locInput = document.getElementById('location');
-            btn.innerHTML = '<span>⏳</span><span>جاري التحديد...</span>';
+    function getRoleScopedReports() {
+      if (!currentUser) return [];
+      if (currentUser.role === "governorate") {
+        return reports.filter(r => r.governorate === currentUser.name);
+      }
+      return reports;
+    }
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        locInput.value = `إحداثيات GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-                        btn.innerHTML = '<span>✅</span><span>تم التحديد</span>';
-                    },
-                    () => {
-                        locInput.value = 'إحداثيات GPS: 30.0444, 31.2357 (تعذر الوصول للموقع الدقيق)';
-                        btn.innerHTML = '<span>⚠️</span><span>تم وضع إحداثي افتراضي</span>';
-                    },
-                    { timeout: 5000 }
-                );
-            } else {
-                locInput.value = 'المتصفح لا يدعم تحديد الموقع';
-                btn.innerHTML = '<span>❌</span><span>غير مدعوم</span>';
-            }
-        }
+    function severityBadge(sev) {
+      if (sev === "أحمر") return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-red-100 text-red-700">🔴 أحمر</span>`;
+      if (sev === "أصفر") return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-700">🟡 أصفر</span>`;
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700">🟢 أخضر</span>`;
+    }
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('mute-icon').textContent = isMuted ? '🔇' : '🔊';
-            document.getElementById('mute-text').textContent = isMuted ? 'مكتوم' : 'الصوت مفعل';
-        }
+    function formatDateTime(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return d.toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" });
+    }
 
-        function playAlertSound(riskLevel) {
-            if (isMuted) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
 
-                const now = audioCtx.currentTime;
-                const beeps = riskLevel === 'أحمر' ? 4 : 2;
-                const freq = riskLevel === 'أحمر' ? 880 : 660;
+    function renderAll() {
+      const roleReports = getRoleScopedReports();
+      document.getElementById("reportsCountBadge").textContent = roleReports.length;
 
-                for (let i = 0; i < beeps; i++) {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = riskLevel === 'أحمر' ? 'sawtooth' : 'sine';
-                    osc.frequency.setValueAtTime(freq, now + i * 0.25);
-                    gain.gain.setValueAtTime(0.2, now + i * 0.25);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.25 + 0.18);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(now + i * 0.25);
-                    osc.stop(now + i * 0.25 + 0.18);
-                }
-            } catch (e) { console.log(e); }
-        }
+      const formGovFilter = currentUser?.role === "governorate"
+        ? currentUser.name
+        : document.getElementById("filterGovForm").value;
 
-        function showAlertBanner(risk, governorate) {
-            const banner = document.getElementById('alert-banner');
-            const title = document.getElementById('alert-title');
-            const msg = document.getElementById('alert-message');
+      const feedList = formGovFilter === "ALL"
+        ? roleReports
+        : roleReports.filter(r => r.governorate === formGovFilter);
 
-            banner.classList.remove('hidden', 'bg-red-700', 'border-red-400', 'bg-amber-600', 'border-amber-300', 'bg-emerald-700', 'border-emerald-400');
-
-            if (risk === 'أحمر') {
-                banner.classList.add('bg-red-700', 'border-red-400');
-                title.textContent = '🚨 تنبيه طوارئ عاجل (كود أحمر)';
-            } else if (risk === 'أصفر') {
-                banner.classList.add('bg-amber-600', 'border-amber-300');
-                title.textContent = '⚠️ تنبيه طوارئ متوسط (كود أصفر)';
-            } else {
-                banner.classList.add('bg-emerald-700', 'border-emerald-400');
-                title.textContent = '✅ تم تسجيل بلاغ (كود أخضر)';
-            }
-
-            msg.textContent = `ورد بلاغ [${risk}] من محافظة [${governorate}] وتم تعميمه على الغرفة المركزية.`;
-        }
-
-        function dismissAlert() {
-            document.getElementById('alert-banner').classList.add('hidden');
-        }
-
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-
-            const gov = document.getElementById('governorate').value;
-            const risk = document.getElementById('risk-level').value;
-            const loc = document.getElementById('location').value;
-            const types = Array.from(document.querySelectorAll('input[name="incident_type"]:checked')).map(el => el.value);
-            const needs = Array.from(document.querySelectorAll('input[name="urgent_needs"]:checked')).map(el => el.value);
-
-            const now = new Date();
-            const timeFormatted = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) + ' - ' + now.toLocaleDateString('ar-EG');
-
-            const newReport = {
-                id: 'REP-' + Math.floor(1000 + Math.random() * 9000),
-                governorate: gov,
-                risk: risk,
-                types: types.length > 0 ? types : ['بلاغ عام'],
-                location: loc,
-                totalInjured: parseInt(document.getElementById('total-injured').value) || 0,
-                critical: parseInt(document.getElementById('critical-cases').value) || 0,
-                moderate: parseInt(document.getElementById('moderate-cases').value) || 0,
-                minor: parseInt(document.getElementById('minor-cases').value) || 0,
-                deaths: parseInt(document.getElementById('deaths').value) || 0,
-                hospitals: document.getElementById('hospitals').value || 'لم يحدد',
-                beds: document.getElementById('beds').value || 'غير مسجل',
-                needs: needs,
-                timestampText: timeFormatted,
-                createdAt: Date.now(),
-                status: 'نشط'
-            };
-
-            if (isLiveMode && db) {
-                try {
-                    const docRef = await db.collection("emergency_reports").add(newReport);
-                    knownReportIds.add(docRef.id);
-                } catch (err) {
-                    alert("حدث خطأ أثناء الإرسال للسيرفر: " + err.message);
-                }
-            } else {
-                reports.unshift(newReport);
-            }
-
-            if (risk === 'أحمر' || risk === 'أصفر') playAlertSound(risk);
-            showAlertBanner(risk, gov);
-
-            document.getElementById('emergency-form').reset();
-            selectRisk('أحمر');
-            document.getElementById('gps-btn').innerHTML = '<span>📍</span><span>تحديد الموقع GPS تلقائياً</span>';
-            submitBtn.disabled = false;
-            switchTab('dashboard');
-        }
-
-        async function closeReport(id, docId) {
-            if (isLiveMode && db && docId) {
-                await db.collection("emergency_reports").doc(docId).update({ status: 'مغلق' });
-            } else {
-                const report = reports.find(r => r.id === id);
-                if (report) {
-                    report.status = 'مغلق';
-                    renderDashboard();
-                }
-            }
-        }
-
-        function renderDashboard() {
-            const list = document.getElementById('reports-list');
-            const badge = document.getElementById('active-badge');
-            const stats = document.getElementById('dashboard-stats');
-            const filterGov = document.getElementById('filter-gov').value;
-
-            const filteredReports = filterGov === 'ALL' ? reports : reports.filter(r => r.governorate === filterGov);
-            const activeCount = reports.filter(r => r.status === 'نشط').length;
-            
-            badge.textContent = activeCount;
-            stats.textContent = `النشطة: ${activeCount} | المعروضة: ${filteredReports.length}`;
-
-            if (filteredReports.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-slate-400 font-bold">لا توجد بلاغات مطابقة حالياً</div>';
-                return;
-            }
-
-            list.innerHTML = filteredReports.map(r => {
-                const isClosed = r.status === 'مغلق';
-                let borderClass = 'border-slate-700';
-                let riskBadgeClass = 'bg-emerald-600 text-white';
-
-                if (!isClosed) {
-                    if (r.risk === 'أحمر') {
-                        borderClass = 'border-red-500 animate-urgent';
-                        riskBadgeClass = 'bg-red-600 text-white';
-                    } else if (r.risk === 'أصفر') {
-                        borderClass = 'border-amber-500';
-                        riskBadgeClass = 'bg-amber-500 text-slate-900';
-                    }
-                } else {
-                    borderClass = 'border-slate-800 opacity-65';
-                    riskBadgeClass = 'bg-slate-600 text-slate-300';
-                }
-
-                return `
-                <div class="bg-slate-800 border-2 ${borderClass} rounded-2xl p-4 shadow-md space-y-3 transition">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold ${riskBadgeClass}">كود ${r.risk}</span>
-                            <span class="font-extrabold text-base text-white">محافظة ${r.governorate}</span>
-                            <span class="text-xs text-slate-400 font-mono">(${r.id})</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-emerald-400'}">${isClosed ? '⚫ مغلق' : '🟢 نشط'}</span>
-                            <span class="text-xs text-slate-400">${r.timestampText || r.timestamp || ''}</span>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-1.5">
-                        ${(r.types || []).map(t => `<span class="px-2.5 py-0.5 bg-slate-900 border border-slate-700 rounded-md text-xs font-bold text-blue-300">${t}</span>`).join('')}
-                    </div>
-
-                    <p class="text-xs sm:text-sm text-slate-300"><strong class="text-slate-100">📍 الموقع:</strong> ${r.location}</p>
-
-                    <div class="grid grid-cols-5 gap-1.5 bg-slate-900/80 p-2.5 rounded-xl text-center border border-slate-700/50">
-                        <div><div class="text-[10px] text-slate-400">الإجمالي</div><div class="font-extrabold text-sm text-white">${r.totalInjured}</div></div>
-                        <div><div class="text-[10px] text-red-400">حرج</div><div class="font-extrabold text-sm text-red-400">${r.critical}</div></div>
-                        <div><div class="text-[10px] text-amber-400">متوسط</div><div class="font-extrabold text-sm text-amber-400">${r.moderate}</div></div>
-                        <div><div class="text-[10px] text-emerald-400">بسيط</div><div class="font-extrabold text-sm text-emerald-400">${r.minor}</div></div>
-                        <div><div class="text-[10px] text-slate-400">وفيات</div><div class="font-extrabold text-sm text-slate-300">${r.deaths}</div></div>
-                    </div>
-
-                    <div class="text-xs text-slate-300 space-y-1">
-                        <p><strong class="text-slate-100">🏥 المستشفيات:</strong> ${r.hospitals} | <strong class="text-slate-100">🛏️ الأسرة:</strong> ${r.beds}</p>
-                        ${(r.needs && r.needs.length > 0) ? `<p><strong class="text-red-400">🚨 الاحتياج العاجل:</strong> ${r.needs.join('، ')}</p>` : ''}
-                    </div>
-
-                    ${!isClosed ? `
-                    <div class="pt-2 border-t border-slate-700 flex justify-end">
-                        <button onclick="closeReport('${r.id}', '${r.docId || ''}')" class="px-4 py-2 bg-slate-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5">
-                            <span>✅</span>
-                            <span>إغلاق البلاغ</span>
-                        </button>
-                    </div>
-                    ` : ''}
+      const feedContainer = document.getElementById("liveFeedCards");
+      if (!feedList.length) {
+        feedContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold text-sm">لا توجد بلاغات مسجلة حتى الآن</div>`;
+      } else {
+        feedContainer.innerHTML = feedList.slice(0, 12).map(r => {
+          const beds = getBedsInfo(r);
+          const pageUrl = buildReportPageUrl(r.id);
+          const hospNames = beds.hospitalsList.map(h => h.name).join("، ");
+          const cat = getCaseCategory(r);
+          return `
+            <a href="${pageUrl}" target="_blank" rel="noopener"
+              class="block rounded-2xl border ${r.severity === "أحمر" ? "border-red-200 bg-red-50/30" : "border-slate-200 bg-white"} p-4 hover:shadow-md hover:border-blue-400 transition space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-extrabold text-slate-900 text-sm">${escapeHtml(r.governorate)}</span>
+                  ${severityBadge(r.severity)}
                 </div>
-                `;
-            }).join('');
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${r.status === "نشط" ? "bg-blue-100 text-blue-800" : "bg-slate-200 text-slate-600"}">${escapeHtml(r.status)}</span>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-extrabold text-blue-900">${escapeHtml(r.incidentType)}</p>
+                <span class="text-[11px] font-bold text-blue-600">فتح التفاصيل ↗</span>
+              </div>
+              <p class="text-xs text-slate-600 line-clamp-1">📍 ${escapeHtml(r.location)}</p>
+              ${hospNames ? `<p class="text-[11px] text-slate-700 font-semibold line-clamp-1">🏥 ${escapeHtml(hospNames)} (${beds.hospitalsList.length})</p>` : ""}
+              <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                <span class="font-bold text-slate-700">${cat}: <strong class="${cat === "مرضى" ? "text-blue-700" : "text-red-600"}">${r.totalInjuries}</strong> | وفيات: <strong>${r.deaths}</strong></span>
+                <span class="text-[11px] text-slate-400">${formatDateTime(r.createdAt)}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 text-[11px] font-bold pt-1">
+                <span class="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-md">طوارئ: ${beds.emergency}</span>
+                <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md">رعاية: ${beds.icu}</span>
+                <span class="bg-cyan-50 text-cyan-700 border border-cyan-200 px-2 py-0.5 rounded-md">حضانة: ${beds.incubator}</span>
+              </div>
+            </a>
+          `;
+        }).join("");
+      }
+
+      const govFilter = currentUser?.role === "governorate"
+        ? currentUser.name
+        : document.getElementById("filterGovDash").value;
+      const sevFilter = document.getElementById("filterSeverityDash").value;
+      const statusFilter = document.getElementById("filterStatusDash").value;
+
+      const filtered = roleReports.filter(r => {
+        if (govFilter !== "ALL" && r.governorate !== govFilter) return false;
+        if (sevFilter !== "ALL" && r.severity !== sevFilter) return false;
+        if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
+        return true;
+      });
+
+      const bedTotals = filtered.reduce((acc, r) => {
+        const b = getBedsInfo(r);
+        acc.emergency += b.emergency;
+        acc.icu += b.icu;
+        acc.incubator += b.incubator;
+        return acc;
+      }, { emergency: 0, icu: 0, incubator: 0 });
+
+      document.getElementById("statTotalReports").textContent = filtered.length;
+      document.getElementById("statRedReports").textContent = filtered.filter(r => r.severity === "أحمر").length;
+      document.getElementById("statTotalInjuries").textContent = filtered.reduce((acc, r) => acc + Number(r.totalInjuries || 0), 0);
+      document.getElementById("statTotalDeaths").textContent = filtered.reduce((acc, r) => acc + Number(r.deaths || 0), 0);
+      document.getElementById("statAvailableBedsBreakdown").textContent =
+        `طوارئ ${bedTotals.emergency} | رعاية ${bedTotals.icu} | حضانة ${bedTotals.incubator}`;
+
+      const tbody = document.getElementById("reportsTableBody");
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400 font-bold">لا توجد بلاغات مطابقة للفلاتر المحددة</td></tr>`;
+      } else {
+        tbody.innerHTML = filtered.map(r => {
+          const beds = getBedsInfo(r);
+          const pageUrl = buildReportPageUrl(r.id);
+          const cat = getCaseCategory(r);
+          const hospitalsCellHtml = beds.hospitalsList.length
+            ? `<div class="space-y-1">
+                ${beds.hospitalsList.map(h => `
+                  <div class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px]">
+                    <span class="font-extrabold text-slate-900 block">${escapeHtml(h.name)}</span>
+                    <span class="text-rose-700 font-bold">ط: ${Number(h.emergencyBeds || 0)}</span> ·
+                    <span class="text-indigo-700 font-bold">ر: ${Number(h.icuBeds || 0)}</span> ·
+                    <span class="text-cyan-700 font-bold">ح: ${Number(h.incubatorBeds || 0)}</span>
+                  </div>
+                `).join("")}
+              </div>`
+            : `<span class="text-xs text-slate-400">ط: ${beds.emergency} · ر: ${beds.icu} · ح: ${beds.incubator}</span>`;
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition align-top">
+              <td class="py-3 px-4 whitespace-nowrap text-xs text-slate-500">${formatDateTime(r.createdAt)}</td>
+              <td class="py-3 px-4 font-extrabold text-slate-900 whitespace-nowrap">${escapeHtml(r.governorate)}</td>
+              <td class="py-3 px-4 whitespace-nowrap">${severityBadge(r.severity)}</td>
+              <td class="py-3 px-4 font-bold text-slate-800 whitespace-nowrap">${escapeHtml(r.incidentType)}</td>
+              <td class="py-3 px-4 max-w-[180px] truncate" title="${escapeHtml(r.location)}">${escapeHtml(r.location)}</td>
+              <td class="py-3 px-4 whitespace-nowrap font-bold">
+                <span class="inline-block text-[11px] px-1.5 py-0.5 rounded ${cat === "مرضى" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}">${cat}: <strong>${r.totalInjuries}</strong></span>
+                <span class="text-slate-400 mx-1">/</span>
+                <span class="text-slate-900">${r.deaths}</span>
+              </td>
+              <td class="py-3 px-4 min-w-[210px]">${hospitalsCellHtml}</td>
+              <td class="py-3 px-4 text-xs">
+                ${(r.needs && r.needs.length)
+                  ? r.needs.map(n => `<span class="inline-block bg-blue-50 text-blue-800 border border-blue-200 rounded-md px-2 py-0.5 m-0.5 font-bold">${escapeHtml(n)}</span>`).join("")
+                  : `<span class="text-slate-400">—</span>`}
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold ${r.status === "نشط" ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"}">
+                  ${escapeHtml(r.status)}
+                </span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <div class="flex items-center gap-1.5">
+                  <a href="${pageUrl}" target="_blank" rel="noopener"
+                    class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1">
+                    <span>عرض</span>
+                    <span>↗</span>
+                  </a>
+                  <button onclick="toggleReportStatus('${r.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold cursor-pointer">
+                    ${r.status === "نشط" ? "إغلاق" : "تنشيط"}
+                  </button>
+                  <button onclick="deleteReport('${r.id}')" class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold cursor-pointer">حذف</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === STORAGE_KEY) {
+        loadLocalReports();
+        if (standaloneReportId) {
+          renderStandaloneReport();
+        } else {
+          renderAll();
         }
-    </script>
+      }
+    });
+
+    loadLocalReports();
+    const savedFb = localStorage.getItem(FB_CONFIG_KEY);
+
+    if (standaloneReportId) {
+      document.getElementById("mainAppWrapper").classList.add("hidden");
+      document.getElementById("standaloneReportView").classList.remove("hidden");
+      renderStandaloneReport();
+      if (savedFb) {
+        try {
+          connectFirebase(JSON.parse(savedFb));
+        } catch (_) {}
+      }
+    } else {
+      populateGovernorates();
+      resetHospitalRows();
+      updateCaseCategoryLabels();
+      restoreSession();
+      renderAll();
+      if (savedFb) {
+        try {
+          connectFirebase(JSON.parse(savedFb));
+        } catch (_) {}
+      }
+    }
+  </script>
 </body>
 </html>
